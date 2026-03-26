@@ -24,6 +24,7 @@ import com.example.appestudio.ui.components.BottomNav
 import com.example.appestudio.ui.theme.AppEstudioTheme
 import com.example.appestudio.ui.theme.Slate900
 import com.example.appestudio.data.SessionManager
+import com.example.appestudio.data.network.RetrofitClient
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,6 +32,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             AppEstudioTheme {
                 val sessionManager = remember { SessionManager(applicationContext) }
+                // Wire JWT interceptor + 401 auto-logout
+                remember(sessionManager) { RetrofitClient.init(sessionManager); sessionManager }
                 val startDestination = if (sessionManager.isLoggedIn()) Screen.Dashboard.route else Screen.Welcome.route
                 val navController = rememberNavController()
                 val currentBackStackEntry by navController.currentBackStackEntryAsState()

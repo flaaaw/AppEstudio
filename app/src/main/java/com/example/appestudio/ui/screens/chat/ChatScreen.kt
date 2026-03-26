@@ -24,6 +24,7 @@ import com.example.appestudio.data.models.ChatDto
 import com.example.appestudio.data.network.RetrofitClient
 import com.example.appestudio.navigation.Screen
 import com.example.appestudio.ui.theme.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -56,6 +57,19 @@ fun ChatScreen(navController: NavController, sessionManager: SessionManager? = n
     }
 
     LaunchedEffect(userId) { loadChats() }
+
+    // Auto-refresh every 10s to pick up new last messages
+    LaunchedEffect(userId) {
+        while (true) {
+            delay(10_000)
+            if (userId.isNotBlank()) {
+                try {
+                    val response = RetrofitClient.instance.getChats(userId)
+                    if (response.isSuccessful) { chats = response.body() ?: emptyList() }
+                } catch (_: Exception) {}
+            }
+        }
+    }
 
     val filtered = chats.filter { it.name.contains(searchQuery, ignoreCase = true) ||
         it.participantNames.any { n -> n.contains(searchQuery, ignoreCase = true) } }

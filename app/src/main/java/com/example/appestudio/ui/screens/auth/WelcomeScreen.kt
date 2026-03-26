@@ -233,6 +233,20 @@ fun LoginView(sessionManager: SessionManager? = null, onLogin: () -> Unit) {
         CustomTextField(label = "Contraseña", placeholder = "••••••••", value = password,
             onValueChange = { password = it; passwordError = null }, isPassword = true, error = passwordError)
 
+        // Stay signed-in checkbox (session is always persisted, this is informational)
+        var staySignedIn by remember { mutableStateOf(true) }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().clickable { staySignedIn = !staySignedIn }
+        ) {
+            Checkbox(
+                checked = staySignedIn,
+                onCheckedChange = { staySignedIn = it },
+                colors = CheckboxDefaults.colors(checkedColor = Emerald500, uncheckedColor = Slate600)
+            )
+            Text("Mantener sesión iniciada", color = Slate400, fontSize = 14.sp)
+        }
+
         Button(
             onClick = {
                 if (!validate()) return@Button
