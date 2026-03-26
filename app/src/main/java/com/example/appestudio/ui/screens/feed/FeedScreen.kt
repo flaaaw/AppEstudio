@@ -34,20 +34,27 @@ import com.example.appestudio.utils.toRelativeTime
 import kotlinx.coroutines.launch
 
 @Composable
-fun FeedScreen(navController: NavController, sessionManager: SessionManager? = null) {
+fun FeedScreen(
+    navController: NavController,
+    sessionManager: SessionManager? = null,
+    initialTag: String? = null
+) {
     val feedViewModel: FeedViewModel = viewModel()
     val uiState by feedViewModel.uiState.collectAsState()
-    var filter by remember { mutableStateOf("Todos") }
+    val scope = rememberCoroutineScope()
+    var posts by remember { mutableStateOf<List<PostDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
     var searchQuery by remember { mutableStateOf("") }
-    var showCreatePost by remember { mutableStateOf(false) }
+    var selectedCategory by remember { mutableStateOf(initialTag ?: "Todos") }
+    var showCreateModal by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
 
-    if (showCreatePost) {
+    if (showCreateModal) {
         CreatePostModal(
             authorName = sessionManager?.getName() ?: "Usuario",
             sessionManager = sessionManager,
-            onDismiss = { showCreatePost = false },
-            onPostCreated = { showCreatePost = false; feedViewModel.loadPosts() }
+            onDismiss = { showCreateModal = false },
+            onPostCreated = { showCreateModal = false; /* loadPosts logic would go here if not using VM */ }
         )
     }
 

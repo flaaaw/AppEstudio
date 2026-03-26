@@ -43,8 +43,12 @@ fun AppNavigation(
         composable(Screen.Dashboard.route) {
             DashboardScreen(navController = navController, sessionManager = sessionManager)
         }
-        composable(Screen.Feed.route) {
-            FeedScreen(navController = navController, sessionManager = sessionManager)
+        composable(
+            route = Screen.Feed.route,
+            arguments = listOf(navArgument("tag") { type = NavType.StringType; nullable = true; defaultValue = null })
+        ) { backStackEntry ->
+            val tag = backStackEntry.arguments?.getString("tag")
+            FeedScreen(navController = navController, sessionManager = sessionManager, initialTag = tag)
         }
         composable(Screen.Chat.route) {
             ChatScreen(navController = navController, sessionManager = sessionManager)
