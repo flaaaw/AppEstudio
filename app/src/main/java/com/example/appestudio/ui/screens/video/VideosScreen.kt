@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import com.example.appestudio.data.SessionManager
 import com.example.appestudio.data.models.VideoDto
@@ -99,11 +100,25 @@ fun VideosScreen(navController: NavController, sessionManager: SessionManager? =
 
 @Composable
 fun VideoCard(video: VideoDto) {
+    val context = LocalContext.current
     Box(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)
             .clip(RoundedCornerShape(16.dp)).background(Slate800)
             .border(1.dp, Slate700.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
-            .clickable { /* Open video player */ }
+            .clickable {
+                // Open video URL in external player
+                val uri = android.net.Uri.parse(video.videoUrl)
+                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri).apply {
+                    setDataAndType(uri, "video/*")
+                    flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                try {
+                    context.startActivity(intent)
+                } catch (_: android.content.ActivityNotFoundException) {
+                    // fallback: try opening as generic URL
+                    context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(video.videoUrl)))
+                }
+            }
     ) {
         Column {
             // Thumbnail

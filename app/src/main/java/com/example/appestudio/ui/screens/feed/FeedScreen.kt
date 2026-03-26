@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import com.example.appestudio.data.SessionManager
 import com.example.appestudio.data.models.PostDto
@@ -148,6 +149,7 @@ fun PostCard(
     onDelete: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var isLiked by remember(post._id) { mutableStateOf(post.likedBy.contains(currentUserId)) }
     var likesCount by remember(post._id) { mutableStateOf(post.likes) }
     var showMenu by remember { mutableStateOf(false) }
@@ -264,7 +266,12 @@ fun PostCard(
                     Text(post.comments.toString(), color = Slate400, fontSize = 14.sp)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
-                    // Android share
+                    val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(android.content.Intent.EXTRA_SUBJECT, post.title)
+                        putExtra(android.content.Intent.EXTRA_TEXT, "${post.title}\n\n${post.content}")
+                    }
+                    context.startActivity(android.content.Intent.createChooser(shareIntent, "Compartir via"))
                 }) {
                     Icon(Icons.Outlined.Share, contentDescription = null, tint = Slate400, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(6.dp))

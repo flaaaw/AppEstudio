@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -28,17 +29,55 @@ import com.example.appestudio.navigation.Screen
 import com.example.appestudio.ui.theme.*
 import com.example.appestudio.utils.toRelativeTime
 import kotlinx.coroutines.launch
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
+import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(navController: NavController, sessionManager: SessionManager? = null) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     var name     by remember { mutableStateOf(sessionManager?.getName() ?: "Usuario") }
     var career   by remember { mutableStateOf(sessionManager?.getCareer() ?: "") }
     var semester by remember { mutableStateOf(sessionManager?.getSemester() ?: 1) }
+    var avatarUrl by remember { mutableStateOf(sessionManager?.getAvatarUrl() ?: "") }
     val email     = sessionManager?.getEmail() ?: ""
     val userId    = sessionManager?.getUserId() ?: ""
+    var isUploadingAvatar by remember { mutableStateOf(false) }
+
+    // Avatar image picker
+    val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            scope.launch {
+                isUploadingAvatar = true
+                try {
+                    val mime = context.contentResolver.getType(it) ?: "image/jpeg"
+                    val stream = context.contentResolver.openInputStream(it)!!
+                    val tmp = File(context.cacheDir, "avatar_upload")
+                    FileOutputStream(tmp).use { out -> stream.copyTo(out) }
+                    val reqFile = tmp.asRequestBody(mime.toMediaTypeOrNull())
+                    val part = MultipartBody.Part.createFormData("avatar", tmp.name, reqFile)
+                    val resp = RetrofitClient.instance.uploadAvatar(userId, part)
+                    if (resp.isSuccessful) {
+                        val newUrl = resp.body()?.get("avatarUrl") ?: ""
+                        avatarUrl = newUrl
+                        sessionManager?.saveAvatarUrl(newUrl)
+                    }
+                } catch (_: Exception) {}
+                isUploadingAvatar = false
+            }
+        }
+    }
 
     var myPosts    by remember { mutableStateOf<List<PostDto>>(emptyList()) }
     var postsCount by remember { mutableStateOf(0) }
@@ -88,9 +127,24 @@ fun ProfileScreen(navController: NavController, sessionManager: SessionManager? 
         item {
             Box(modifier = Modifier.fillMaxWidth().background(Slate800).padding(24.dp)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    // Avatar
-                    Box(modifier = Modifier.size(90.dp).clip(CircleShape).background(Emerald500), contentAlignment = Alignment.Center) {
-                        Text(name.take(1).uppercase(), color = Color.White, fontSize = 36.sp, fontWeight = FontWeight.Bold)
+                    // Avatar — tappable, shows actual photo if uploaded
+                    Box(modifier = Modifier.size(90.dp).clickable { avatarPicker.launch("image/*") }, contentAlignment = Alignment.BottomEnd) {
+                        if (avatarUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = avatarUrl,
+                                contentDescription = "Avatar",
+                                modifier = Modifier.size(90.dp).clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Box(modifier = Modifier.size(90.dp).clip(CircleShape).background(Emerald500), contentAlignment = Alignment.Center) {
+                                Text(name.take(1).uppercase(), color = Color.White, fontSize = 36.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        Box(modifier = Modifier.size(28.dp).clip(CircleShape).background(Slate800).border(2.dp, Slate700, CircleShape), contentAlignment = Alignment.Center) {
+                            if (isUploadingAvatar) CircularProgressIndicator(color = Emerald400, modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                            else Icon(Icons.Default.CameraAlt, contentDescription = "Cambiar foto", tint = Slate300, modifier = Modifier.size(14.dp))
+                        }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(name, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)

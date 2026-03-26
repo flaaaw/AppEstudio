@@ -54,6 +54,13 @@ interface ApiService {
         @Body request: UpdateUserRequest
     ): Response<UpdateUserResponse>
 
+    @Multipart
+    @PUT("api/users/{id}/avatar")
+    suspend fun uploadAvatar(
+        @Path("id") userId: String,
+        @Part avatar: MultipartBody.Part
+    ): Response<Map<String, String>>
+
     // --- CHATS ---
     @GET("api/chats/{userId}")
     suspend fun getChats(@Path("userId") userId: String): Response<List<ChatDto>>

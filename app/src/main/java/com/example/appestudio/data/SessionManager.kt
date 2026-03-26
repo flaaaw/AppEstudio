@@ -20,6 +20,7 @@ class SessionManager(context: Context) {
         private const val KEY_CAREER    = "user_career"
         private const val KEY_USER_ID   = "user_id"
         private const val KEY_SEMESTER  = "user_semester"
+        private const val KEY_AVATAR_URL = "user_avatar_url"
     }
 
     /** Call after a successful login or register */
@@ -52,6 +53,12 @@ class SessionManager(context: Context) {
     fun getCareer():   String = prefs.getString(KEY_CAREER,  "") ?: ""
     fun getUserId():   String = prefs.getString(KEY_USER_ID, "") ?: ""
     fun getSemester(): Int    = prefs.getInt(KEY_SEMESTER, 1)
+    fun getAvatarUrl(): String = prefs.getString(KEY_AVATAR_URL, "") ?: ""
+
+    /** Persist avatar URL after upload */
+    fun saveAvatarUrl(url: String) {
+        prefs.edit().putString(KEY_AVATAR_URL, url).apply()
+    }
 
     /** Call on logout */
     fun clearSession() {
