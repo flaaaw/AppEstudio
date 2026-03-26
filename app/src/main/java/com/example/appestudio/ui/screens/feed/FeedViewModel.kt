@@ -1,7 +1,11 @@
 package com.example.appestudio.ui.screens.feed
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.appestudio.data.local.AppDatabase
+import com.example.appestudio.data.local.toDto
+import com.example.appestudio.data.local.toEntity
 import com.example.appestudio.data.models.PostDto
 import com.example.appestudio.data.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,26 +18,82 @@ sealed class FeedUiState {
     data class Error(val message: String) : FeedUiState()
 }
 
-class FeedViewModel : ViewModel() {
+class FeedViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val db = AppDatabase.getDatabase(application)
+    private val postDao = db.postDao()
 
     private val _uiState = MutableStateFlow<FeedUiState>(FeedUiState.Loading)
     val uiState: StateFlow<FeedUiState> = _uiState
 
-    init { loadPosts() }
+    private var currentPage = 1
+    private var isEndReached = false
+    private var isCurrentlyLoading = false
 
-    fun loadPosts() {
+    init { 
+        loadFromCache()
+        loadPosts() 
+    }
+
+    private fun loadFromCache() {
         viewModelScope.launch {
-            _uiState.value = FeedUiState.Loading
+            val cached = postDao.getAllPosts().map { it.toDto() }
+            if (cached.isNotEmpty()) {
+                _uiState.value = FeedUiState.Success(cached)
+            }
+        }
+    }
+
+    fun loadPosts(isRefresh: Boolean = true) {
+        if (isCurrentlyLoading) return
+        viewModelScope.launch {
+            isCurrentlyLoading = true
+            if (isRefresh && _uiState.value is FeedUiState.Loading) {
+                _uiState.value = FeedUiState.Loading
+            }
+            if (isRefresh) {
+                currentPage = 1
+                isEndReached = false
+            }
+            
             try {
-                val response = RetrofitClient.instance.getPosts()
+                val response = RetrofitClient.instance.getPosts(page = currentPage, limit = 10)
                 if (response.isSuccessful) {
-                    _uiState.value = FeedUiState.Success(response.body() ?: emptyList())
+                    val newPosts = response.body() ?: emptyList()
+                    if (newPosts.isEmpty()) {
+                        isEndReached = true
+                    }
+                    
+                    val currentList = if (isRefresh) emptyList() else {
+                        (uiState.value as? FeedUiState.Success)?.posts ?: emptyList()
+                    }
+                    val updatedList = currentList + newPosts
+                    _uiState.value = FeedUiState.Success(updatedList)
+
+                    // Cache first page
+                    if (isRefresh && newPosts.isNotEmpty()) {
+                        postDao.clearAll()
+                        postDao.insertPosts(newPosts.map { it.toEntity() })
+                    }
+                    
+                    currentPage++
                 } else {
-                    _uiState.value = FeedUiState.Error("Error ${response.code()}")
+                    if (isRefresh && _uiState.value is FeedUiState.Loading) {
+                        _uiState.value = FeedUiState.Error("Error ${response.code()}")
+                    }
                 }
             } catch (e: Exception) {
-                _uiState.value = FeedUiState.Error("Sin conexión al servidor")
+                if (isRefresh && _uiState.value is FeedUiState.Loading) {
+                    _uiState.value = FeedUiState.Error("Sin conexión al servidor")
+                }
             }
+            isCurrentlyLoading = false
+        }
+    }
+
+    fun loadMorePosts() {
+        if (!isEndReached && !isCurrentlyLoading) {
+            loadPosts(isRefresh = false)
         }
     }
 }

@@ -22,6 +22,7 @@ import com.example.appestudio.ui.screens.chat.ChatDetailScreen
 import com.example.appestudio.ui.screens.chat.NewChatScreen
 import com.example.appestudio.ui.screens.dashboard.DashboardScreen
 import com.example.appestudio.ui.screens.feed.FeedScreen
+import com.example.appestudio.ui.screens.feed.CommentsScreen
 import com.example.appestudio.ui.screens.profile.ProfileScreen
 import com.example.appestudio.ui.screens.video.VideosScreen
 
@@ -72,6 +73,13 @@ fun AppNavigation(
         }
         composable(Screen.NewChat.route) {
             NewChatScreen(navController = navController, sessionManager = sessionManager)
+        }
+        composable(
+            route = Screen.Comments.route,
+            arguments = listOf(navArgument("postId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val postId = backStackEntry.arguments?.getString("postId") ?: ""
+            CommentsScreen(navController = navController, postId = postId, sessionManager = sessionManager)
         }
     }
 }

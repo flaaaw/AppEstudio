@@ -9,4 +9,5 @@ sealed class Screen(val route: String) {
     object Profile : Screen("profile")
     object ChatDetail : Screen("chat/{chatId}/{chatName}")
     object NewChat : Screen("new_chat")
+    object Comments : Screen("comments/{postId}")
 }

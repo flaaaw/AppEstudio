@@ -26,8 +26,8 @@ import com.example.appestudio.data.models.PostDto
 import com.example.appestudio.data.models.UpdateUserRequest
 import com.example.appestudio.data.network.RetrofitClient
 import com.example.appestudio.navigation.Screen
-import com.example.appestudio.ui.theme.*
 import com.example.appestudio.utils.toRelativeTime
+import com.example.appestudio.utils.ImageUtils
 import kotlinx.coroutines.launch
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -62,16 +62,24 @@ fun ProfileScreen(navController: NavController, sessionManager: SessionManager? 
                 isUploadingAvatar = true
                 try {
                     val mime = context.contentResolver.getType(it) ?: "image/jpeg"
-                    val stream = context.contentResolver.openInputStream(it)!!
-                    val tmp = File(context.cacheDir, "avatar_upload")
-                    FileOutputStream(tmp).use { out -> stream.copyTo(out) }
-                    val reqFile = tmp.asRequestBody(mime.toMediaTypeOrNull())
-                    val part = MultipartBody.Part.createFormData("avatar", tmp.name, reqFile)
-                    val resp = RetrofitClient.instance.uploadAvatar(userId, part)
-                    if (resp.isSuccessful) {
-                        val newUrl = resp.body()?.get("avatarUrl") ?: ""
-                        avatarUrl = newUrl
-                        sessionManager?.saveAvatarUrl(newUrl)
+                    val tmp = if (mime.startsWith("image/")) {
+                        ImageUtils.compressImage(context, it, "avatar_upload.jpg")
+                    } else {
+                        val stream = context.contentResolver.openInputStream(it)!!
+                        val f = File(context.cacheDir, "avatar_upload")
+                        FileOutputStream(f).use { out -> stream.copyTo(out) }
+                        f
+                    }
+                    
+                    if (tmp != null) {
+                        val reqFile = tmp.asRequestBody(mime.toMediaTypeOrNull())
+                        val part = MultipartBody.Part.createFormData("avatar", tmp.name, reqFile)
+                        val resp = RetrofitClient.instance.uploadAvatar(userId, part)
+                        if (resp.isSuccessful) {
+                            val newUrl = resp.body()?.get("avatarUrl") ?: ""
+                            avatarUrl = newUrl
+                            sessionManager?.saveAvatarUrl(newUrl)
+                        }
                     }
                 } catch (_: Exception) {}
                 isUploadingAvatar = false
@@ -222,7 +230,9 @@ fun ProfileScreen(navController: NavController, sessionManager: SessionManager? 
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(post.likes.toString(), color = Slate400, fontSize = 12.sp)
                             }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
+                                navController.navigate("comments/${post._id}")
+                            }) {
                                 Icon(Icons.Default.ChatBubble, contentDescription = null, tint = Slate500, modifier = Modifier.size(14.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(post.comments.toString(), color = Slate400, fontSize = 12.sp)

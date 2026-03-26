@@ -17,10 +17,17 @@ interface ApiService {
 
     // --- POSTS ---
     @GET("api/posts")
-    suspend fun getPosts(): Response<List<PostDto>>
+    suspend fun getPosts(
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 10
+    ): Response<List<PostDto>>
 
     @GET("api/posts/user/{userId}")
-    suspend fun getPostsByUser(@Path("userId") userId: String): Response<List<PostDto>>
+    suspend fun getPostsByUser(
+        @Path("userId") userId: String,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
+    ): Response<List<PostDto>>
 
     @Multipart
     @POST("api/posts")
@@ -60,6 +67,13 @@ interface ApiService {
         @Path("id") userId: String,
         @Part avatar: MultipartBody.Part
     ): Response<Map<String, String>>
+
+    // Comments
+    @GET("api/posts/{id}/comments")
+    suspend fun getComments(@Path("id") postId: String): Response<List<CommentDto>>
+
+    @POST("api/posts/{id}/comments")
+    suspend fun addComment(@Path("id") postId: String, @Body request: CreateCommentRequest): Response<CommentDto>
 
     // --- CHATS ---
     @GET("api/chats/{userId}")

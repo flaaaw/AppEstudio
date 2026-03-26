@@ -13,6 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,10 +27,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.example.appestudio.data.SessionManager
 import com.example.appestudio.data.models.PostDto
 import com.example.appestudio.data.network.RetrofitClient
+import com.example.appestudio.ui.components.ShimmerPostItem
 import com.example.appestudio.ui.theme.*
 import com.example.appestudio.utils.toRelativeTime
 import kotlinx.coroutines.launch
@@ -37,15 +41,32 @@ import kotlinx.coroutines.launch
 fun FeedScreen(
     navController: NavController,
     sessionManager: SessionManager? = null,
+    feedViewModel: FeedViewModel = viewModel(),
     initialTag: String? = null
 ) {
-    val feedViewModel: FeedViewModel = viewModel()
-    val uiState by feedViewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+    val pullToRefreshState = rememberPullToRefreshState()
+    val uiState by feedViewModel.uiState.collectAsState()
     var filter by remember { mutableStateOf(initialTag ?: "Todos") }
     var showCreatePost by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var showSearch by remember { mutableStateOf(false) }
+    val isLoading = uiState is FeedUiState.Loading
+
+    // Infinite scroll detection
+    val shouldLoadMore = remember {
+        derivedStateOf {
+            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            lastVisibleItem != null && lastVisibleItem.index >= listState.layoutInfo.totalItemsCount - 3
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore.value) {
+        if (shouldLoadMore.value && uiState is FeedUiState.Success) {
+            feedViewModel.loadMorePosts()
+        }
+    }
  
     LaunchedEffect(initialTag) {
         if (initialTag != null) filter = initialTag
@@ -110,8 +131,10 @@ fun FeedScreen(
             }
 
             when (val state = uiState) {
-                is FeedUiState.Loading -> item {
-                    Box(modifier = Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Emerald500) }
+                is FeedUiState.Loading -> {
+                    items(5) {
+                        ShimmerPostItem()
+                    }
                 }
                 is FeedUiState.Error -> item {
                     Column(modifier = Modifier.fillMaxWidth().padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -119,7 +142,33 @@ fun FeedScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(state.message, color = Slate400, fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { feedViewModel.loadPosts() }, colors = ButtonDefaults.buttonColors(containerColor = Emerald500)) { Text("Reintentar") }
+                    PullToRefreshBox(
+                        isRefreshing = isLoading,
+                        onRefresh = { feedViewModel.loadPosts() },
+                        modifier = Modifier.weight(1f),
+                        state = pullToRefreshState
+                    ) {
+                        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 100.dp)) {
+                            items(5) {
+                                ShimmerPostItem()
+                            }
+                        }
+                    }
+                }
+                is FeedUiState.Error -> {
+                    PullToRefreshBox(
+                        isRefreshing = isLoading,
+                        onRefresh = { feedViewModel.loadPosts() },
+                        modifier = Modifier.weight(1f),
+                        state = pullToRefreshState
+                    ) {
+                        Column(modifier = Modifier.fillMaxSize().padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                            Icon(Icons.Default.WifiOff, contentDescription = null, tint = Slate500, modifier = Modifier.size(48.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(state.message, color = Slate400, fontSize = 14.sp)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = { feedViewModel.loadPosts() }, colors = ButtonDefaults.buttonColors(containerColor = Emerald500)) { Text("Reintentar") }
+                        }
                     }
                 }
                 is FeedUiState.Success -> {
@@ -128,21 +177,39 @@ fun FeedScreen(
                         val matchesSearch = searchQuery.isBlank() || post.title.contains(searchQuery, ignoreCase = true) || post.content.contains(searchQuery, ignoreCase = true) || post.author.contains(searchQuery, ignoreCase = true)
                         matchesFilter && matchesSearch
                     }
-                    if (filtered.isEmpty()) {
-                        item {
-                            Column(modifier = Modifier.fillMaxWidth().padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.Inbox, contentDescription = null, tint = Slate500, modifier = Modifier.size(48.dp))
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text("No hay publicaciones aún", color = Slate400, fontSize = 14.sp)
+                    PullToRefreshBox(
+                        isRefreshing = isLoading,
+                        onRefresh = { feedViewModel.loadPosts() },
+                        modifier = Modifier.weight(1f),
+                        state = pullToRefreshState
+                    ) {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(bottom = 100.dp)
+                        ) {
+                            if (isLoading && filtered.isEmpty()) {
+                                items(5) {
+                                    ShimmerPostItem()
+                                }
+                            } else if (filtered.isEmpty()) {
+                                item {
+                                    Column(modifier = Modifier.fillParentMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                                        Icon(Icons.Default.Inbox, null, tint = Slate600, modifier = Modifier.size(64.dp))
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text("No hay publicaciones en esta categoría", color = Slate500, textAlign = TextAlign.Center)
+                                    }
+                                }
+                            } else {
+                                items(filtered) { post ->
+                                    PostCard(
+                                        navController = navController,
+                                        post = post,
+                                        currentUserId = sessionManager?.getUserId() ?: "",
+                                        onDelete = { feedViewModel.loadPosts() }
+                                    )
+                                }
                             }
-                        }
-                    } else {
-                        items(filtered) { post ->
-                            PostCard(
-                                post = post,
-                                currentUserId = sessionManager?.getUserId() ?: "",
-                                onDelete = { feedViewModel.loadPosts() }
-                            )
                         }
                     }
                 }
@@ -153,6 +220,7 @@ fun FeedScreen(
 
 @Composable
 fun PostCard(
+    navController: androidx.navigation.NavController,
     post: PostDto,
     currentUserId: String = "",
     onDelete: () -> Unit = {}
@@ -269,7 +337,9 @@ fun PostCard(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(likesCount.toString(), color = Slate400, fontSize = 14.sp)
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
+                    navController.navigate("comments/${post._id}")
+                }) {
                     Icon(Icons.Outlined.ChatBubbleOutline, contentDescription = null, tint = Slate400, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(post.comments.toString(), color = Slate400, fontSize = 14.sp)

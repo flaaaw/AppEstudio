@@ -10,6 +10,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +32,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChatScreen(navController: NavController, sessionManager: SessionManager? = null) {
     val scope = rememberCoroutineScope()
+    val pullToRefreshState = rememberPullToRefreshState()
     var searchQuery by remember { mutableStateOf("") }
     var chats by remember { mutableStateOf<List<ChatDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -105,36 +108,43 @@ fun ChatScreen(navController: NavController, sessionManager: SessionManager? = n
             )
         }
 
-        when {
-            isLoading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Emerald500)
-            }
-            errorMsg != null -> Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Icon(Icons.Default.WifiOff, contentDescription = null, tint = Slate500, modifier = Modifier.size(48.dp))
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(errorMsg!!, color = Slate400, fontSize = 14.sp)
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { loadChats() }, colors = ButtonDefaults.buttonColors(containerColor = Emerald500)) {
-                    Text("Reintentar")
+        PullToRefreshBox(
+            isRefreshing = isLoading,
+            onRefresh = { loadChats() },
+            modifier = Modifier.weight(1f),
+            state = pullToRefreshState
+        ) {
+            when {
+                isLoading && chats.isEmpty() -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Emerald500)
                 }
-            }
-            filtered.isEmpty() -> Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Slate500, modifier = Modifier.size(48.dp))
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("No tienes conversaciones aún", color = Slate400, fontSize = 14.sp)
-            }
-            else -> LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
-                items(filtered) { chat ->
-                    val displayName = if (chat.isGroup) chat.name
-                        else chat.participantNames.firstOrNull { it != sessionManager?.getName() } ?: "Chat"
-                    ChatItem(
-                        name = displayName,
-                        message = chat.lastMessage.ifBlank { "Inicia la conversación" },
-                        time = chat.lastMessageAt.take(10),
-                        unreadCount = 0,
-                        isGroup = chat.isGroup,
-                        onClick = { navController.navigate("chat/${chat._id}/${java.net.URLEncoder.encode(displayName, "UTF-8")}") }
-                    )
+                errorMsg != null -> Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Icon(Icons.Default.WifiOff, contentDescription = null, tint = Slate500, modifier = Modifier.size(48.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(errorMsg!!, color = Slate400, fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { loadChats() }, colors = ButtonDefaults.buttonColors(containerColor = Emerald500)) {
+                        Text("Reintentar")
+                    }
+                }
+                filtered.isEmpty() -> Column(modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Slate500, modifier = Modifier.size(48.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("No tienes conversaciones aún", color = Slate400, fontSize = 14.sp)
+                }
+                else -> LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 100.dp)) {
+                    items(filtered) { chat ->
+                        val displayName = if (chat.isGroup) chat.name
+                            else chat.participantNames.firstOrNull { it != sessionManager?.getName() } ?: "Chat"
+                        ChatItem(
+                            name = displayName,
+                            message = chat.lastMessage.ifBlank { "Inicia la conversación" },
+                            time = chat.lastMessageAt.take(10),
+                            unreadCount = 0,
+                            isGroup = chat.isGroup,
+                            onClick = { navController.navigate("chat/${chat._id}/${java.net.URLEncoder.encode(displayName, "UTF-8")}") }
+                        )
+                    }
                 }
             }
         }

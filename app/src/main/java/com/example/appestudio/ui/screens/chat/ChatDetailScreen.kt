@@ -91,7 +91,7 @@ fun ChatDetailScreen(
                 val newMessages = response.body() ?: emptyList()
                 if (newMessages.size != messages.size) {
                     messages = newMessages
-                    if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
+                    // The scroll logic is now handled by a separate LaunchedEffect
                 }
             }
         } catch (_: Exception) {}
@@ -101,6 +101,13 @@ fun ChatDetailScreen(
     // Auto-poll every 5s
     LaunchedEffect(chatId) {
         while (true) { fetchMessages(); delay(5_000) }
+    }
+
+    // Scroll to the last message when messages list changes
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
     }
 
     fun sendMessage() {

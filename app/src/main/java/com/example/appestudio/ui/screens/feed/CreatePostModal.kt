@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.appestudio.data.network.RetrofitClient
 import com.example.appestudio.ui.theme.*
+import com.example.appestudio.utils.ImageUtils
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -181,11 +182,19 @@ fun CreatePostModal(
 
                             val filePart = selectedFileUri?.let { uri ->
                                 val mime = context.contentResolver.getType(uri) ?: "application/octet-stream"
-                                val stream = context.contentResolver.openInputStream(uri)!!
-                                val tmpFile = File(context.cacheDir, selectedFileName ?: "upload")
-                                FileOutputStream(tmpFile).use { out -> stream.copyTo(out) }
-                                val reqBody = tmpFile.asRequestBody(mime.toMediaTypeOrNull())
-                                MultipartBody.Part.createFormData("file", tmpFile.name, reqBody)
+                                val tmpFile = if (mime.startsWith("image/")) {
+                                    ImageUtils.compressImage(context, uri, selectedFileName ?: "upload.jpg")
+                                } else {
+                                    val stream = context.contentResolver.openInputStream(uri)!!
+                                    val f = File(context.cacheDir, selectedFileName ?: "upload")
+                                    FileOutputStream(f).use { out -> stream.copyTo(out) }
+                                    f
+                                }
+                                
+                                if (tmpFile != null) {
+                                    val reqBody = tmpFile.asRequestBody(mime.toMediaTypeOrNull())
+                                    MultipartBody.Part.createFormData("file", tmpFile.name, reqBody)
+                                } else null
                             }
 
                             val response = RetrofitClient.instance.createPost(
