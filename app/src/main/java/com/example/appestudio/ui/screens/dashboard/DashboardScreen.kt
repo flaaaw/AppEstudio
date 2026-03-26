@@ -289,6 +289,9 @@ fun DashboardScreen(navController: NavController, sessionManager: SessionManager
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
+                                                    .clickable {
+                                                        navController.navigate("feed?tag=$sub")
+                                                    }
                                                     .padding(vertical = 8.dp),
                                                 horizontalArrangement = Arrangement.SpaceBetween,
                                                 verticalAlignment = Alignment.CenterVertically

@@ -42,19 +42,21 @@ fun FeedScreen(
     val feedViewModel: FeedViewModel = viewModel()
     val uiState by feedViewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
-    var posts by remember { mutableStateOf<List<PostDto>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
+    var filter by remember { mutableStateOf(initialTag ?: "Todos") }
+    var showCreatePost by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf(initialTag ?: "Todos") }
-    var showCreateModal by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
+ 
+    LaunchedEffect(initialTag) {
+        if (initialTag != null) filter = initialTag
+    }
 
-    if (showCreateModal) {
+    if (showCreatePost) {
         CreatePostModal(
             authorName = sessionManager?.getName() ?: "Usuario",
             sessionManager = sessionManager,
-            onDismiss = { showCreateModal = false },
-            onPostCreated = { showCreateModal = false; /* loadPosts logic would go here if not using VM */ }
+            onDismiss = { showCreatePost = false },
+            onPostCreated = { showCreatePost = false; feedViewModel.loadPosts() }
         )
     }
 
