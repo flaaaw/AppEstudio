@@ -306,7 +306,7 @@ fun EditProfileModal(
                 value = semester, onValueChange = { semester = it.filter { c -> c.isDigit() } },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
                 shape = RoundedCornerShape(12.dp),
-                keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Emerald500, unfocusedBorderColor = Slate700,
                     focusedTextColor = Color.White, unfocusedTextColor = Color.White,

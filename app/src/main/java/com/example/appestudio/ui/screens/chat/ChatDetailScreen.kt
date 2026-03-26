@@ -247,7 +247,7 @@ fun ChatDetailScreen(
         // ── File preview bar (when a file is selected) ────────────────
         AnimatedVisibility(visible = selectedUri != null, enter = fadeIn() + slideInVertically { it }, exit = fadeOut() + slideOutVertically { it }) {
             Row(
-                modifier = Modifier.fillMaxWidth().background(Slate800).border(topWidth = 1.dp, color = Slate700, shape = RoundedCornerShape(0.dp)).padding(12.dp),
+                modifier = Modifier.fillMaxWidth().background(Slate800).border(width = 1.dp, color = Slate700).padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(Icons.Default.AttachFile, null, tint = Emerald400, modifier = Modifier.size(20.dp))
