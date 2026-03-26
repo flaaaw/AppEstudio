@@ -147,7 +147,8 @@ fun NewChatScreen(
                                         )
                                         if (response.isSuccessful) {
                                             val chatId = response.body()?._id
-                                            navController.navigate("chat/$chatId") {
+                                            val encodedName = java.net.URLEncoder.encode(user.name, "UTF-8")
+                                            navController.navigate("chat/$chatId/$encodedName") {
                                                 popUpTo("new_chat") { inclusive = true }
                                             }
                                         }

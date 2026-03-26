@@ -70,6 +70,17 @@ interface ApiService {
         @Body request: SendMessageRequest
     ): Response<MessageDto>
 
+    @Multipart
+    @POST("api/chats/{chatId}/messages/media")
+    suspend fun sendMediaMessage(
+        @Path("chatId") chatId: String,
+        @Part("senderId")   senderId:   RequestBody,
+        @Part("senderName") senderName: RequestBody,
+        @Part("text")       text:       RequestBody?,
+        @Part("mediaType")  mediaType:  RequestBody?,
+        @Part file: MultipartBody.Part
+    ): Response<MessageDto>
+
     // --- VIDEOS ---
     @GET("api/videos")
     suspend fun getVideos(@Query("topic") topic: String? = null): Response<List<VideoDto>>
