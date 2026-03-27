@@ -66,64 +66,76 @@ fun DashboardScreen(navController: NavController, sessionManager: SessionManager
         contentPadding = PaddingValues(bottom = 100.dp)
     ) {
         item {
-            // Header
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("Bienvenido de vuelta,", color = Slate400, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                        Text("¡Hola, $userName! \uD83D\uDC4B", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(Slate800)
-                            .clickable { showNotifications = !showNotifications },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = Slate300, modifier = Modifier.size(20.dp))
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .offset(x = (-8).dp, y = 8.dp)
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Emerald500)
-                                .border(1.dp, Slate800, CircleShape)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Search Bar
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Buscar temas, ejercicios...", color = Slate500) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Slate500) },
+            // Header with Gradient
+            Box {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Slate800, RoundedCornerShape(16.dp)),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
-                    ),
-                    singleLine = true
+                        .height(200.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(Slate800.copy(alpha = 0.4f), Color.Transparent)
+                            )
+                        )
                 )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Bienvenido de vuelta,", color = Slate400, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                            Text("¡Hola, $userName! \uD83D\uDC4B", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Slate800)
+                                .clickable { showNotifications = !showNotifications },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = Slate300, modifier = Modifier.size(20.dp))
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .offset(x = (-8).dp, y = 8.dp)
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(Emerald500)
+                                    .border(1.dp, Slate800, CircleShape)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Search Bar
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Buscar temas, ejercicios...", color = Slate500) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Slate500) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Slate800, RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        ),
+                        singleLine = true
+                    )
+                }
             }
         }
 

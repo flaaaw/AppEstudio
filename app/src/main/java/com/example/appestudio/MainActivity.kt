@@ -29,6 +29,7 @@ import com.example.appestudio.data.network.SocketHandler
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         
         // Initialize Socket.IO

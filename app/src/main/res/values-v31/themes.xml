@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.AppEstudio" parent="android:Theme.Material.Light.NoActionBar" />
-
-    <!-- Splash Screen Theme -->
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
         <!-- Set the splash screen background, icon and its background. -->
         <item name="windowSplashScreenBackground">#0F172A</item> <!-- Slate900 -->
