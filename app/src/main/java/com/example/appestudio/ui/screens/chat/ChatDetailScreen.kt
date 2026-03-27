@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -103,32 +104,39 @@ fun ChatDetailScreen(
         isLoading = false
     }
 
-    // Socket.IO real-time listener
-    LaunchedEffect(chatId) {
-        if (chatId.isNullOrBlank()) return@LaunchedEffect
+    // Socket.IO real-time listener with proper cleanup
+    DisposableEffect(chatId) {
+        if (chatId.isNullOrBlank()) return@DisposableEffect onDispose {}
+        
         val socket = SocketHandler.getSocket()
         val gson = Gson()
         
-        socket?.emit("join_chat", chatId)
-        
-        socket?.on("message") { args ->
+        // Listener callback
+        val onMessage = io.socket.emitter.Emitter.Listener { args ->
             if (args.isNotEmpty()) {
                 try {
                     val data = args[0] as JSONObject
                     val newMessage = gson.fromJson(data.toString(), MessageDto::class.java)
-                    // Only add if it's not already there (to avoid duplicates with polling)
-                    if (messages.none { it._id == newMessage._id }) {
-                        messages = messages + newMessage
+                    
+                    // Dispatch to Main thread for Compose state update
+                    scope.launch {
+                        // Only add if it's not already there (to avoid duplicates with polling)
+                        if (messages.none { it._id == newMessage._id }) {
+                            messages = messages + newMessage
+                        }
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
             }
         }
+
+        socket?.emit("join_chat", chatId)
+        socket?.on("message", onMessage)
         
-        // Clean up on dispose
-        // Note: DisposableEffect would be cleaner for off(), 
-        // but since we are in a loop-polling LaunchedEffect too, we'll use a local check.
+        onDispose {
+            socket?.off("message", onMessage)
+        }
     }
 
     suspend fun fetchChatDetail() {
@@ -207,7 +215,7 @@ fun ChatDetailScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { navController.navigateUp() }) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
             }
             Spacer(modifier = Modifier.width(8.dp))
             Box(modifier = Modifier.size(38.dp).clip(CircleShape).background(Slate700), contentAlignment = Alignment.Center) {
@@ -280,7 +288,7 @@ fun ChatDetailScreen(
                                                     .padding(horizontal = 8.dp, vertical = 4.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Icon(if (msg.mediaType == "audio") Icons.Default.Mic else Icons.Default.InsertDriveFile, null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(16.dp))
+                                                Icon(if (msg.mediaType == "audio") Icons.Default.Mic else Icons.AutoMirrored.Filled.InsertDriveFile, null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(16.dp))
                                                 Spacer(modifier = Modifier.width(6.dp))
                                                 Text("Archivo adjunto", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
                                             }
@@ -349,7 +357,7 @@ fun ChatDetailScreen(
                 modifier = Modifier.size(48.dp).clip(CircleShape).background(if (canSend) Emerald500 else Slate700)
             ) {
                 if (isSending) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                else Icon(Icons.Default.Send, null, tint = Color.White, modifier = Modifier.size(20.dp))
+                else Icon(Icons.AutoMirrored.Filled.Send, null, tint = Color.White, modifier = Modifier.size(20.dp))
             }
         }
     }

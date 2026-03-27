@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,6 +29,7 @@ import com.example.appestudio.data.network.RetrofitClient
 import com.example.appestudio.navigation.Screen
 import com.example.appestudio.utils.toRelativeTime
 import com.example.appestudio.utils.ImageUtils
+import com.example.appestudio.ui.theme.*
 import kotlinx.coroutines.launch
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -258,7 +260,7 @@ fun ProfileScreen(navController: NavController, sessionManager: SessionManager? 
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Red500.copy(alpha = 0.15f))
             ) {
-                Icon(Icons.Default.Logout, contentDescription = null, tint = Red500, modifier = Modifier.size(20.dp))
+                Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = Red500, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Cerrar Sesión", color = Red500, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }

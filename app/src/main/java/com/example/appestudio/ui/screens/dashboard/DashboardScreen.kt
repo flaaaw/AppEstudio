@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -44,7 +45,7 @@ val topics = listOf(
     Topic("fisica", "Física", Icons.Default.Bolt, 8, Amber500, listOf("Mecánica Clásica", "Electromagnetismo", "Óptica")),
     Topic("quimica", "Química", Icons.Default.Science, 5, Purple500, listOf("Química Orgánica", "Termodinámica")),
     Topic("ingles", "Inglés", Icons.Default.Public, 15, Rose500, listOf("Grammar B1", "Technical Vocabulary", "Speaking Practice")),
-    Topic("electronica", "Electrónica", Icons.Default.MenuBook, 9, Cyan500, listOf("Circuitos Digitales", "Microcontroladores"))
+    Topic("electronica", "Electrónica", Icons.AutoMirrored.Filled.MenuBook, 9, Cyan500, listOf("Circuitos Digitales", "Microcontroladores"))
 )
 
 @Composable
@@ -179,7 +180,7 @@ fun DashboardScreen(navController: NavController, sessionManager: SessionManager
                                         .background(tint.copy(alpha = 0.2f)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(Icons.Default.MenuBook, contentDescription = null, tint = tint, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, tint = tint, modifier = Modifier.size(16.dp))
                                 }
                                 Text(text, color = Slate200, fontSize = 14.sp, fontWeight = FontWeight.Medium, lineHeight = 18.sp)
                             }

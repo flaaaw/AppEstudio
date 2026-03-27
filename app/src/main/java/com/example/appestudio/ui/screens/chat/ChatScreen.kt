@@ -29,6 +29,7 @@ import com.example.appestudio.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(navController: NavController, sessionManager: SessionManager? = null) {
     val scope = rememberCoroutineScope()

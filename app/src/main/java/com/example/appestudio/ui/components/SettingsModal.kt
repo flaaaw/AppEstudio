@@ -55,9 +55,9 @@ fun SettingsModal(
                     .background(Slate800)
             ) {
                 SettingsItem(Icons.Default.Person, "Editar Perfil", "Nombre, foto, biografía")
-                Divider(color = Slate700.copy(alpha=0.5f))
+                HorizontalDivider(color = Slate700.copy(alpha=0.5f))
                 SettingsItem(Icons.Default.Email, "Correo Electrónico", "carlos.martinez@upp.edu.mx")
-                Divider(color = Slate700.copy(alpha=0.5f))
+                HorizontalDivider(color = Slate700.copy(alpha=0.5f))
                 SettingsItem(Icons.Default.Lock, "Cambiar Contraseña", "Actualizar tu contraseña")
             }
 
@@ -83,7 +83,7 @@ fun SettingsModal(
                     }
                     Switch(checked = darkMode, onCheckedChange = { darkMode = it }, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Emerald500, uncheckedTrackColor = Slate700))
                 }
-                Divider(color = Slate700.copy(alpha=0.5f))
+                HorizontalDivider(color = Slate700.copy(alpha=0.5f))
                 SettingsItem(Icons.Default.Language, "Idioma", "Español")
             }
 

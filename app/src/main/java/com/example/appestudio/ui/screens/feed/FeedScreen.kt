@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListItemInfo
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -37,6 +40,7 @@ import com.example.appestudio.ui.theme.*
 import com.example.appestudio.utils.toRelativeTime
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreen(
     navController: NavController,
@@ -89,126 +93,98 @@ fun FeedScreen(
         },
         containerColor = Slate900
     ) { padding ->
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = 100.dp, top = 24.dp)) {
-
-            item {
-                // Header row
-                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 0.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Comunidad", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                    IconButton(onClick = { showSearch = !showSearch }) {
-                        Icon(if (showSearch) Icons.Default.Close else Icons.Default.Search, contentDescription = "Buscar", tint = Slate400)
-                    }
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Search
-                if (showSearch) {
-                    OutlinedTextField(
-                        value = searchQuery, onValueChange = { searchQuery = it },
-                        placeholder = { Text("Buscar publicaciones...", color = Slate500) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Slate500) },
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Emerald500, unfocusedBorderColor = Slate700,
-                            focusedTextColor = Color.White, unfocusedTextColor = Color.White,
-                            focusedContainerColor = Slate800, unfocusedContainerColor = Slate800
-                        ),
-                        singleLine = true
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
-                // Filters
-                LazyRow(contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(bottom = 24.dp)) {
-                    items(listOf("Todos", "Dudas", "Material", "Programación", "Matemáticas")) { item ->
-                        val isSelected = filter == item
-                        Box(modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(if (isSelected) Emerald500 else Slate800).clickable { filter = item }.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                            Text(item, color = if (isSelected) Color.White else Slate400, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        PullToRefreshBox(
+            isRefreshing = isLoading,
+            onRefresh = { feedViewModel.loadPosts() },
+            state = pullToRefreshState,
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 100.dp, top = 24.dp)
+            ) {
+                item {
+                    // Header row
+                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 0.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Comunidad", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        IconButton(onClick = { showSearch = !showSearch }) {
+                            Icon(if (showSearch) Icons.Default.Close else Icons.Default.Search, contentDescription = "Buscar", tint = Slate400)
                         }
                     }
-                }
-            }
+                    Spacer(modifier = Modifier.height(12.dp))
 
-            when (val state = uiState) {
-                is FeedUiState.Loading -> {
-                    items(5) {
-                        ShimmerPostItem()
+                    // Search
+                    if (showSearch) {
+                        OutlinedTextField(
+                            value = searchQuery, onValueChange = { searchQuery = it },
+                            placeholder = { Text("Buscar publicaciones...", color = Slate500) },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Slate500) },
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Emerald500, unfocusedBorderColor = Slate700,
+                                focusedTextColor = Color.White, unfocusedTextColor = Color.White,
+                                focusedContainerColor = Slate800, unfocusedContainerColor = Slate800
+                            ),
+                            singleLine = true
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
-                }
-                is FeedUiState.Error -> item {
-                    Column(modifier = Modifier.fillMaxWidth().padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.WifiOff, contentDescription = null, tint = Slate500, modifier = Modifier.size(48.dp))
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(state.message, color = Slate400, fontSize = 14.sp)
-                        Spacer(modifier = Modifier.height(16.dp))
-                    PullToRefreshBox(
-                        isRefreshing = isLoading,
-                        onRefresh = { feedViewModel.loadPosts() },
-                        modifier = Modifier.weight(1f),
-                        state = pullToRefreshState
-                    ) {
-                        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 100.dp)) {
-                            items(5) {
-                                ShimmerPostItem()
+
+                    // Filters
+                    LazyRow(contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(bottom = 24.dp)) {
+                        items(listOf("Todos", "Dudas", "Material", "Programación", "Matemáticas")) { item ->
+                            val isSelected = filter == item
+                            Box(modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(if (isSelected) Emerald500 else Slate800).clickable { filter = item }.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                                Text(item, color = if (isSelected) Color.White else Slate400, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                             }
                         }
                     }
                 }
-                is FeedUiState.Error -> {
-                    PullToRefreshBox(
-                        isRefreshing = isLoading,
-                        onRefresh = { feedViewModel.loadPosts() },
-                        modifier = Modifier.weight(1f),
-                        state = pullToRefreshState
-                    ) {
-                        Column(modifier = Modifier.fillMaxSize().padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                            Icon(Icons.Default.WifiOff, contentDescription = null, tint = Slate500, modifier = Modifier.size(48.dp))
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(state.message, color = Slate400, fontSize = 14.sp)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(onClick = { feedViewModel.loadPosts() }, colors = ButtonDefaults.buttonColors(containerColor = Emerald500)) { Text("Reintentar") }
+
+                when (val state = uiState) {
+                    is FeedUiState.Loading -> {
+                        items(5) {
+                            ShimmerPostItem()
                         }
                     }
-                }
-                is FeedUiState.Success -> {
-                    val filtered = state.posts.filter { post ->
-                        val matchesFilter = filter == "Todos" || post.tags.any { it.equals(filter, ignoreCase = true) }
-                        val matchesSearch = searchQuery.isBlank() || post.title.contains(searchQuery, ignoreCase = true) || post.content.contains(searchQuery, ignoreCase = true) || post.author.contains(searchQuery, ignoreCase = true)
-                        matchesFilter && matchesSearch
+                    is FeedUiState.Error -> {
+                        item {
+                            Column(modifier = Modifier.fillParentMaxSize().padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                                Icon(Icons.Default.WifiOff, contentDescription = null, tint = Slate500, modifier = Modifier.size(48.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(state.message, color = Slate400, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(onClick = { feedViewModel.loadPosts() }, colors = ButtonDefaults.buttonColors(containerColor = Emerald500)) {
+                                    Text("Reintentar")
+                                }
+                            }
+                        }
                     }
-                    PullToRefreshBox(
-                        isRefreshing = isLoading,
-                        onRefresh = { feedViewModel.loadPosts() },
-                        modifier = Modifier.weight(1f),
-                        state = pullToRefreshState
-                    ) {
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(bottom = 100.dp)
-                        ) {
-                            if (isLoading && filtered.isEmpty()) {
-                                items(5) {
-                                    ShimmerPostItem()
+                    is FeedUiState.Success -> {
+                        val filtered = state.posts.filter { post ->
+                            val matchesFilter = filter == "Todos" || post.tags.any { it.equals(filter, ignoreCase = true) }
+                            val matchesSearch = searchQuery.isBlank() || post.title.contains(searchQuery, ignoreCase = true) || post.content.contains(searchQuery, ignoreCase = true) || post.author.contains(searchQuery, ignoreCase = true)
+                            matchesFilter && matchesSearch
+                        }
+
+                        if (filtered.isEmpty() && !isLoading) {
+                            item {
+                                Column(modifier = Modifier.fillParentMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                                    Icon(Icons.Default.Inbox, null, tint = Slate600, modifier = Modifier.size(64.dp))
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text("No hay publicaciones en esta categoría", color = Slate500, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                                 }
-                            } else if (filtered.isEmpty()) {
-                                item {
-                                    Column(modifier = Modifier.fillParentMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                                        Icon(Icons.Default.Inbox, null, tint = Slate600, modifier = Modifier.size(64.dp))
-                                        Spacer(modifier = Modifier.height(16.dp))
-                                        Text("No hay publicaciones en esta categoría", color = Slate500, textAlign = TextAlign.Center)
-                                    }
-                                }
-                            } else {
-                                items(filtered) { post ->
-                                    PostCard(
-                                        navController = navController,
-                                        post = post,
-                                        currentUserId = sessionManager?.getUserId() ?: "",
-                                        onDelete = { feedViewModel.loadPosts() }
-                                    )
-                                }
+                            }
+                        } else {
+                            items(filtered) { post ->
+                                PostCard(
+                                    navController = navController,
+                                    post = post,
+                                    currentUserId = sessionManager?.getUserId() ?: "",
+                                    onDelete = { feedViewModel.loadPosts() }
+                                )
                             }
                         }
                     }
@@ -313,7 +289,7 @@ fun PostCard(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            Divider(color = Slate700.copy(alpha = 0.5f))
+            HorizontalDivider(color = Slate700.copy(alpha = 0.5f))
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {

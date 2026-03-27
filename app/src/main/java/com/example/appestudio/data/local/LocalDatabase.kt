@@ -13,6 +13,8 @@ data class PostEntity(
     val title: String,
     val content: String,
     val mediaUrl: String?,
+    val timeInfo: String,
+    val isVerified: Boolean,
     val tags: List<String>,
     val likedBy: List<String>,
     val likes: Int,
@@ -43,7 +45,7 @@ interface PostDao {
     suspend fun clearAll()
 }
 
-@Database(entities = [PostEntity::class], version = 1)
+@Database(entities = [PostEntity::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun postDao(): PostDao
@@ -58,7 +60,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "app_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }
@@ -73,6 +77,8 @@ fun PostDto.toEntity() = PostEntity(
     title = title,
     content = content,
     mediaUrl = mediaUrl,
+    timeInfo = timeInfo,
+    isVerified = isVerified,
     tags = tags,
     likedBy = likedBy,
     likes = likes,
@@ -84,12 +90,14 @@ fun PostEntity.toDto() = PostDto(
     _id = id,
     author = author,
     authorId = authorId,
+    timeInfo = timeInfo,
     title = title,
     content = content,
     mediaUrl = mediaUrl,
-    tags = tags,
-    likedBy = likedBy,
     likes = likes,
+    likedBy = likedBy,
     comments = comments,
+    isVerified = isVerified,
+    tags = tags,
     createdAt = createdAt
 )

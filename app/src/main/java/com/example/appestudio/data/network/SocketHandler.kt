@@ -13,7 +13,7 @@ object SocketHandler {
             // Using the same base URL as Retrofit
             // Note: Replace with yours if different. 
             // Here we use 10.0.2.2 for Android Emulator locally.
-            mSocket = IO.socket("http://10.0.2.2:3000")
+            mSocket = IO.socket("https://back-end-appestudio.onrender.com/")
         } catch (e: URISyntaxException) {
             e.printStackTrace()
         }
