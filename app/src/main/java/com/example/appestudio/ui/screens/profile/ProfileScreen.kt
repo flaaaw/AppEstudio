@@ -1,5 +1,7 @@
 package com.example.appestudio.ui.screens.profile
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,7 +19,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Transparent
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,12 +40,11 @@ import kotlinx.coroutines.launch
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import androidx.compose.foundation.BorderStroke
 import java.io.File
 import java.io.FileOutputStream
 
@@ -83,7 +88,10 @@ fun ProfileScreen(navController: NavController, sessionManager: SessionManager? 
                             sessionManager?.saveAvatarUrl(newUrl)
                         }
                     }
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    Log.e("ProfileScreen", "Error uploading avatar", e)
+                    Toast.makeText(context, "No se pudo actualizar el avatar", Toast.LENGTH_SHORT).show()
+                }
                 isUploadingAvatar = false
             }
         }
@@ -102,7 +110,10 @@ fun ProfileScreen(navController: NavController, sessionManager: SessionManager? 
                 myPosts = resp.body() ?: emptyList()
                 postsCount = myPosts.size
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("ProfileScreen", "Error loading profile posts", e)
+            Toast.makeText(context, "No se pudieron cargar tus publicaciones", Toast.LENGTH_SHORT).show()
+        }
     }
 
     // Edit profile modal
@@ -122,7 +133,10 @@ fun ProfileScreen(navController: NavController, sessionManager: SessionManager? 
                             name = newName; career = newCareer; semester = newSemester
                             sessionManager?.updateProfile(newName, newCareer, newSemester)
                         }
-                    } catch (_: Exception) {}
+                    } catch (e: Exception) {
+                        Log.e("ProfileScreen", "Error updating profile", e)
+                        Toast.makeText(context, "No se pudo guardar el perfil", Toast.LENGTH_SHORT).show()
+                    }
                     showEdit = false
                 }
             }
@@ -133,122 +147,169 @@ fun ProfileScreen(navController: NavController, sessionManager: SessionManager? 
         modifier = Modifier.fillMaxSize().background(Slate900),
         contentPadding = PaddingValues(bottom = 100.dp)
     ) {
-        // ── Header ──────────────────────────────────────────────────
+        // ── Header with Gradient ──────────────────────────────────────
         item {
-            Box(modifier = Modifier.fillMaxWidth().background(Slate800).padding(24.dp)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Emerald500.copy(alpha = 0.15f), Transparent)
+                        )
+                    )
+                    .padding(top = 40.dp, bottom = 24.dp, start = 24.dp, end = 24.dp)
+            ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                     // Avatar — tappable, shows actual photo if uploaded
-                    Box(modifier = Modifier.size(90.dp).clickable { avatarPicker.launch("image/*") }, contentAlignment = Alignment.BottomEnd) {
-                        if (avatarUrl.isNotBlank()) {
-                            AsyncImage(
-                                model = avatarUrl,
-                                contentDescription = "Avatar",
-                                modifier = Modifier.size(90.dp).clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Box(modifier = Modifier.size(90.dp).clip(CircleShape).background(Emerald500), contentAlignment = Alignment.Center) {
-                                Text(name.take(1).uppercase(), color = Color.White, fontSize = 36.sp, fontWeight = FontWeight.Bold)
+                    Box(
+                        modifier = Modifier
+                            .size(110.dp)
+                            .clickable { avatarPicker.launch("image/*") },
+                        contentAlignment = Alignment.BottomEnd
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            modifier = Modifier.size(110.dp).border(2.dp, Emerald500.copy(alpha = 0.5f), CircleShape),
+                            color = Slate800,
+                            tonalElevation = 4.dp
+                        ) {
+                            if (avatarUrl.isNotBlank()) {
+                                AsyncImage(
+                                    model = avatarUrl,
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Box(modifier = Modifier.fillMaxSize().background(
+                                    Brush.linearGradient(listOf(Emerald500, Emerald700))
+                                ), contentAlignment = Alignment.Center) {
+                                    Text(name.take(1).uppercase(), color = Color.White, fontSize = 44.sp, fontWeight = FontWeight.Black)
+                                }
                             }
                         }
-                        Box(modifier = Modifier.size(28.dp).clip(CircleShape).background(Slate800).border(2.dp, Slate700, CircleShape), contentAlignment = Alignment.Center) {
-                            if (isUploadingAvatar) CircularProgressIndicator(color = Emerald400, modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
-                            else Icon(Icons.Default.CameraAlt, contentDescription = "Cambiar foto", tint = Slate300, modifier = Modifier.size(14.dp))
+                        // Edit Badge
+                        Surface(
+                            modifier = Modifier.size(32.dp).offset(x = (-4).dp, y = (-4).dp),
+                            shape = CircleShape,
+                            color = Emerald500,
+                            border = BorderStroke(2.dp, Slate900)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                if (isUploadingAvatar) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                                else Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            }
                         }
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(name, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("@${email.substringBefore('@')}", color = Emerald400, fontSize = 14.sp)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.School, contentDescription = null, tint = Slate400, modifier = Modifier.size(14.dp))
-                        Text("$career • Semestre $semester", color = Slate400, fontSize = 13.sp)
+                    
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(name, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+                    Text("@${email.substringBefore('@')}", color = Slate400, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Surface(
+                        color = Slate800,
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, Slate700.copy(alpha = 0.5f))
+                    ) {
+                        Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.School, contentDescription = null, tint = Emerald400, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("$career • ${semester}º Semestre", color = Slate300, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     // Edit button
-                    OutlinedButton(
+                    Button(
                         onClick = { showEdit = true },
-                        shape = RoundedCornerShape(12.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Slate700),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Slate300)
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Slate800),
+                        border = BorderStroke(1.dp, Slate700)
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Editar Perfil", fontSize = 13.sp)
+                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = Slate200)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Personalizar Perfil", color = Slate200, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
 
-        // ── Stats ────────────────────────────────────────────────────
+        // ── Stats Row ────────────────────────────────────────────────
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
+            Surface(
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                color = Slate800.copy(alpha = 0.4f),
+                shape = RoundedCornerShape(20.dp),
+                border = BorderStroke(1.dp, Slate700.copy(alpha = 0.3f))
             ) {
-                StatItem(value = postsCount.toString(), label = "Publicaciones")
-                StatItem(value = myPosts.sumOf { it.likes }.toString(), label = "Me gusta recibidos")
-                StatItem(value = semester.toString(), label = "Semestre")
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    StatItem(value = postsCount.toString(), label = "Posts")
+                    VerticalDivider(modifier = Modifier.height(24.dp), color = Slate700)
+                    StatItem(value = myPosts.sumOf { it.likes }.toString(), label = "Likes")
+                    VerticalDivider(modifier = Modifier.height(24.dp), color = Slate700)
+                    StatItem(value = semester.toString(), label = "Semestre")
+                }
             }
         }
 
-        // ── My Posts ─────────────────────────────────────────────────
+        // ── My Posts Title ──────────────────────────────────────────
         item {
+            Spacer(modifier = Modifier.height(24.dp))
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Mis Publicaciones", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                if (myPosts.isEmpty()) Unit else Text("${myPosts.size}", color = Emerald400, fontSize = 14.sp)
+                Text("Mis Publicaciones", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                if (myPosts.isNotEmpty()) {
+                    Surface(color = Emerald500.copy(alpha = 0.1f), shape = CircleShape) {
+                        Text(
+                            "${myPosts.size}", 
+                            color = Emerald400, 
+                            fontSize = 12.sp, 
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                }
             }
         }
 
         if (myPosts.isEmpty()) {
             item {
-                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Inbox, contentDescription = null, tint = Slate600, modifier = Modifier.size(48.dp))
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("Aún no has publicado nada", color = Slate500, fontSize = 14.sp)
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 60.dp), 
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.Default.PostAdd, contentDescription = null, tint = Slate700, modifier = Modifier.size(64.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Comparte tu primer post con la comunidad", color = Slate500, fontSize = 14.sp)
                 }
             }
         } else {
             items(myPosts) { post ->
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 6.dp)
-                        .clip(RoundedCornerShape(12.dp)).background(Slate800)
-                        .border(1.dp, Slate700.copy(alpha = 0.5f), RoundedCornerShape(12.dp)).padding(16.dp)
-                ) {
-                    Column {
-                        Text(post.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(post.content, color = Slate400, fontSize = 13.sp, maxLines = 2)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Favorite, contentDescription = null, tint = Red500, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(post.likes.toString(), color = Slate400, fontSize = 12.sp)
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
-                                navController.navigate("comments/${post._id}")
-                            }) {
-                                Icon(Icons.Default.ChatBubble, contentDescription = null, tint = Slate500, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(post.comments.toString(), color = Slate400, fontSize = 12.sp)
-                            }
-                            Text(post.createdAt.toRelativeTime(), color = Slate600, fontSize = 12.sp)
+                com.example.appestudio.ui.components.PostCard(
+                    navController = navController,
+                    post = post,
+                    currentUserId = userId,
+                    onDelete = {
+                        scope.launch {
+                            val resp = RetrofitClient.instance.getPostsByUser(userId)
+                            if (resp.isSuccessful) myPosts = resp.body() ?: emptyList()
                         }
                     }
-                }
+                )
             }
         }
 
         // ── Logout ───────────────────────────────────────────────────
         item {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             Button(
                 onClick = {
                     sessionManager?.clearSession()
@@ -256,14 +317,16 @@ fun ProfileScreen(navController: NavController, sessionManager: SessionManager? 
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(52.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Red500.copy(alpha = 0.15f))
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(56.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Red500.copy(alpha = 0.1f)),
+                border = BorderStroke(1.dp, Red500.copy(alpha = 0.2f))
             ) {
                 Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = Red500, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Cerrar Sesión", color = Red500, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(modifier = Modifier.width(10.dp))
+                Text("Cerrar Sesión", color = Red500, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }

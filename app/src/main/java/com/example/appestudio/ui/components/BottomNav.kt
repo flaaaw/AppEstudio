@@ -32,7 +32,7 @@ data class NavItem(
 val bottomNavItems = listOf(
     NavItem(Screen.Dashboard.route, "Inicio", Icons.Outlined.Home, Icons.Filled.Home),
     NavItem(Screen.Chat.route, "Chat", Icons.Outlined.ChatBubbleOutline, Icons.Filled.ChatBubble),
-    NavItem(Screen.Feed.route, "Comunidad", Icons.Outlined.PeopleOutline, Icons.Filled.People),
+    NavItem("feed", "Comunidad", Icons.Outlined.PeopleOutline, Icons.Filled.People),
     NavItem(Screen.Videos.route, "Videos", Icons.Outlined.PlayCircleOutline, Icons.Filled.PlayCircleFilled),
     NavItem(Screen.Profile.route, "Perfil", Icons.Outlined.PersonOutline, Icons.Filled.Person)
 )
@@ -61,7 +61,7 @@ fun BottomNav(
             verticalAlignment = Alignment.CenterVertically
         ) {
             bottomNavItems.forEach { item ->
-                val isSelected = currentRoute == item.route
+                val isSelected = currentRoute == item.route || currentRoute.startsWith(item.route + "?")
                 Column(
                     modifier = Modifier
                         .weight(1f)

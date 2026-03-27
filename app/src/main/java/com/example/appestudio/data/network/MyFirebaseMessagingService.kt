@@ -25,12 +25,13 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        // Send token to backend if needed for targeted notifications
+        // Firebase is optional in this deployment; no token sync required.
     }
 
     private fun sendNotification(title: String, messageBody: String) {
         val intent = Intent(this, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra("type", "push")
         }
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,

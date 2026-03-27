@@ -2,6 +2,7 @@ package com.example.appestudio.ui.screens.chat
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
@@ -95,12 +96,16 @@ fun ChatDetailScreen(
             val response = RetrofitClient.instance.getMessages(chatId)
             if (response.isSuccessful) {
                 val newMessages = response.body() ?: emptyList()
-                if (newMessages.size != messages.size) {
+                val sameContent = newMessages.size == messages.size &&
+                    newMessages.zip(messages).all { (a, b) -> a._id == b._id }
+                if (!sameContent) {
                     messages = newMessages
                     // The scroll logic is now handled by a separate LaunchedEffect
                 }
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("ChatDetailScreen", "Failed loading messages", e)
+        }
         isLoading = false
     }
 
@@ -144,13 +149,15 @@ fun ChatDetailScreen(
         try {
             val response = RetrofitClient.instance.getChatDetail(chatId)
             if (response.isSuccessful) chatData = response.body()
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("ChatDetailScreen", "Failed loading chat detail", e)
+        }
     }
 
-    // Auto-poll every 10s (increased delay since we have sockets now)
+    // Auto-poll fallback every 30s (socket is primary channel)
     LaunchedEffect(chatId) {
         if (!chatId.isNullOrBlank()) fetchChatDetail()
-        while (true) { fetchMessages(); delay(10_000) }
+        while (true) { fetchMessages(); delay(30_000) }
     }
 
     // Scroll to the last message when messages list changes
@@ -203,7 +210,9 @@ fun ChatDetailScreen(
                     )
                 }
                 fetchMessages()
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.e("ChatDetailScreen", "Failed sending message", e)
+            }
             isSending = false
         }
     }
@@ -380,7 +389,9 @@ fun ChatDetailScreen(
                         if (resp.isSuccessful) {
                             chatData = resp.body()
                         }
-                    } catch (_: Exception) {}
+                    } catch (e: Exception) {
+                        Log.e("ChatDetailScreen", "Failed updating chat", e)
+                    }
                 }
             }
         )

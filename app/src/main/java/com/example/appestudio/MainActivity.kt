@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -41,6 +42,11 @@ class MainActivity : ComponentActivity() {
                 val sessionManager = remember { SessionManager(applicationContext) }
                 // Wire JWT interceptor + 401 auto-logout
                 remember(sessionManager) { RetrofitClient.init(sessionManager); sessionManager }
+                LaunchedEffect(sessionManager) {
+                    sessionManager.getUserId()
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { SocketHandler.getSocket()?.emit("join", it) }
+                }
                 val startDestination = if (sessionManager.isLoggedIn()) Screen.Dashboard.route else Screen.Welcome.route
                 val navController = rememberNavController()
                 val currentBackStackEntry by navController.currentBackStackEntryAsState()

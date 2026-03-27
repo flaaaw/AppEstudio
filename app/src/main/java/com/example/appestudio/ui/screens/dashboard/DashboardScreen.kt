@@ -21,14 +21,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Transparent
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.appestudio.data.SessionManager
 import com.example.appestudio.navigation.Screen
 import com.example.appestudio.ui.theme.*
+import androidx.compose.foundation.BorderStroke
 
 data class Topic(
     val id: String,
@@ -67,22 +71,22 @@ fun DashboardScreen(navController: NavController, sessionManager: SessionManager
         contentPadding = PaddingValues(bottom = 100.dp)
     ) {
         item {
-            // Header with Gradient
+            // Header with Premium Gradient
             Box {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .height(240.dp)
                         .background(
                             Brush.verticalGradient(
-                                colors = listOf(Slate800.copy(alpha = 0.4f), Color.Transparent)
+                                colors = listOf(Emerald500.copy(alpha = 0.15f), Transparent)
                             )
                         )
                 )
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp)
+                        .padding(top = 48.dp, start = 24.dp, end = 24.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -91,48 +95,50 @@ fun DashboardScreen(navController: NavController, sessionManager: SessionManager
                     ) {
                         Column {
                             Text("Bienvenido de vuelta,", color = Slate400, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                            Text("¡Hola, $userName! \uD83D\uDC4B", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                            Text("¡Hola, $userName! \uD83D\uDC4B", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
                         }
-                        Box(
+                        Surface(
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(48.dp)
                                 .clip(CircleShape)
-                                .background(Slate800)
                                 .clickable { showNotifications = !showNotifications },
-                            contentAlignment = Alignment.Center
+                            color = Slate800,
+                            border = BorderStroke(1.dp, Slate700)
                         ) {
-                            Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = Slate300, modifier = Modifier.size(20.dp))
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .offset(x = (-8).dp, y = 8.dp)
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(Emerald500)
-                                    .border(1.dp, Slate800, CircleShape)
-                            )
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.NotificationsNone, contentDescription = "Notifications", tint = Emerald400, modifier = Modifier.size(22.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(12.dp)
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(Red500)
+                                        .border(1.dp, Slate800, CircleShape)
+                                )
+                            }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
 
-                    // Search Bar
+                    // Redesigned Search Bar
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
                         placeholder = { Text("Buscar temas, ejercicios...", color = Slate500) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Slate500) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Emerald500) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Slate800, RoundedCornerShape(16.dp)),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
+                            .background(Slate800.copy(alpha = 0.8f), RoundedCornerShape(20.dp)),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Emerald500,
+                            unfocusedBorderColor = Slate700,
                             focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
+                            unfocusedTextColor = Color.White,
+                            focusedContainerColor = Transparent,
+                            unfocusedContainerColor = Transparent
                         ),
                         singleLine = true
                     )
@@ -141,48 +147,55 @@ fun DashboardScreen(navController: NavController, sessionManager: SessionManager
         }
 
         item {
-            // Quick Access
-            Column(modifier = Modifier.padding(bottom = 32.dp)) {
-                Text("Accesos Rápidos", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 16.dp))
+            // Quick Access Section
+            Column(modifier = Modifier.padding(vertical = 32.dp)) {
+                Text(
+                    "Accesos Rápidos", 
+                    color = Color.White, 
+                    fontSize = 18.sp, 
+                    fontWeight = FontWeight.ExtraBold, 
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                )
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    val quickAccessItems = listOf("Ejercicios Recientes", "Material Nuevo", "Tutorías Grabadas")
-                    items(quickAccessItems.size) { index ->
-                        val text = quickAccessItems[index]
-                        val tint = when (index) {
-                            0 -> Blue500
-                            1 -> Emerald500
-                            else -> Violet500
-                        }
-                        Box(
+                    val quickAccessItems = listOf(
+                        Triple("Comunidad", Icons.Default.Groups, Blue500),
+                        Triple("Clases", Icons.Default.PlayCircle, Emerald500),
+                        Triple("Ejercicios", Icons.Default.Quiz, Violet500)
+                    )
+                    items(quickAccessItems) { (text, icon, tint) ->
+                        Surface(
                             modifier = Modifier
-                                .width(140.dp)
-                                .height(96.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Slate800)
-                                .border(1.dp, Slate700.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                                .width(150.dp)
+                                .height(110.dp)
                                 .clickable {
-                                    if (text == "Tutorías Grabadas") navController.navigate(Screen.Videos.route)
-                                    else navController.navigate(Screen.Feed.route)
-                                }
-                                .padding(16.dp)
+                                    val targetRoute = if (text == "Clases") Screen.Videos.route else "feed"
+                                    navController.navigate(targetRoute) {
+                                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                            shape = RoundedCornerShape(24.dp),
+                            color = Slate800,
+                            border = BorderStroke(1.dp, Slate700.copy(alpha = 0.5f))
                         ) {
                             Column(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier.padding(16.dp),
                                 verticalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(tint.copy(alpha = 0.2f)),
-                                    contentAlignment = Alignment.Center
+                                Surface(
+                                    modifier = Modifier.size(36.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = tint.copy(alpha = 0.15f)
                                 ) {
-                                    Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, tint = tint, modifier = Modifier.size(16.dp))
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+                                    }
                                 }
-                                Text(text, color = Slate200, fontSize = 14.sp, fontWeight = FontWeight.Medium, lineHeight = 18.sp)
+                                Text(text, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -191,36 +204,41 @@ fun DashboardScreen(navController: NavController, sessionManager: SessionManager
         }
 
         item {
-            Text("Explorar Temas", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 16.dp))
+            Text(
+                "Explorar Temas", 
+                color = Color.White, 
+                fontSize = 20.sp, 
+                fontWeight = FontWeight.ExtraBold, 
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            )
         }
 
         if (filteredTopics.isEmpty()) {
             item {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 60.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("No se encontraron temas", color = Slate400)
+                    Icon(Icons.Default.SearchOff, contentDescription = null, tint = Slate700, modifier = Modifier.size(64.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("No encontramos lo que buscas", color = Slate500)
                     TextButton(onClick = { searchQuery = "" }) {
-                        Text("Limpiar búsqueda", color = Emerald400)
+                        Text("Ver todos los temas", color = Emerald400, fontWeight = FontWeight.Bold)
                     }
                 }
             }
         } else {
-            // Because we want to simulate a grid of 2 columns with spanning
+            // Grid logic
             val rowItems = mutableListOf<List<Topic>>()
             var i = 0
             while (i < filteredTopics.size) {
                 if (expandedTopicId == filteredTopics[i].id) {
-                    // Takes full width
                     rowItems.add(listOf(filteredTopics[i]))
                     i += 1
                 } else if (i + 1 < filteredTopics.size && expandedTopicId != filteredTopics[i+1].id) {
-                    // Make a row of 2
                     rowItems.add(listOf(filteredTopics[i], filteredTopics[i+1]))
                     i += 2
                 } else {
-                    // Last item alone
                     rowItems.add(listOf(filteredTopics[i]))
                     i += 1
                 }
@@ -235,29 +253,24 @@ fun DashboardScreen(navController: NavController, sessionManager: SessionManager
                 ) {
                     for (topic in row) {
                         val isExpanded = expandedTopicId == topic.id
-                        Box(
+                        ElevatedCard(
                             modifier = Modifier
-                                .weight(if (isExpanded) 1f else 0.5f)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Slate800)
-                                .border(1.dp, Slate700.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                                .weight(if (isExpanded) 1f else 0.5f),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = CardDefaults.elevatedCardColors(containerColor = Slate800),
+                            elevation = CardDefaults.elevatedCardElevation(defaultElevation = if (isExpanded) 4.dp else 1.dp)
                         ) {
                             Column {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable {
-                                            expandedTopicId = if (isExpanded) null else topic.id
-                                        }
+                                        .clickable { expandedTopicId = if (isExpanded) null else topic.id }
                                         .background(
                                             Brush.linearGradient(
-                                                colors = listOf(
-                                                    topic.color.copy(alpha = 0.2f),
-                                                    Color.Transparent
-                                                )
+                                                colors = listOf(topic.color.copy(alpha = 0.15f), Transparent)
                                             )
                                         )
-                                        .padding(16.dp)
+                                        .padding(20.dp)
                                 ) {
                                     Column {
                                         Row(
@@ -265,52 +278,70 @@ fun DashboardScreen(navController: NavController, sessionManager: SessionManager
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.Top
                                         ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(40.dp)
-                                                    .clip(RoundedCornerShape(12.dp))
-                                                    .background(Slate900.copy(alpha = 0.5f)),
-                                                contentAlignment = Alignment.Center
+                                            Surface(
+                                                modifier = Modifier.size(44.dp),
+                                                shape = RoundedCornerShape(12.dp),
+                                                color = Slate900.copy(alpha = 0.6f),
+                                                border = BorderStroke(1.dp, Slate700)
                                             ) {
-                                                Icon(topic.icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(topic.icon, contentDescription = null, tint = topic.color, modifier = Modifier.size(24.dp))
+                                                }
                                             }
                                             if (isExpanded) {
-                                                Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, tint = Slate400)
+                                                Icon(Icons.Default.ExpandLess, contentDescription = null, tint = Slate500)
                                             } else {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .background(Slate900.copy(alpha = 0.5f), CircleShape)
-                                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                                Surface(
+                                                    color = Slate900.copy(alpha = 0.5f),
+                                                    shape = CircleShape
                                                 ) {
-                                                    Text(topic.count.toString(), color = Slate400, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                                                    Text(
+                                                        topic.count.toString(), 
+                                                        color = Slate400, 
+                                                        fontSize = 12.sp, 
+                                                        fontWeight = FontWeight.Bold,
+                                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                                    )
                                                 }
                                             }
                                         }
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        Text(topic.name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text(topic.name, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
                                     }
                                 }
 
-                                AnimatedVisibility(visible = isExpanded) {
+                                AnimatedVisibility(
+                                    visible = isExpanded,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
+                                ) {
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .background(Slate800.copy(alpha = 0.5f))
-                                            .padding(16.dp)
+                                            .background(Slate900.copy(alpha = 0.3f))
+                                            .padding(bottom = 12.dp)
                                     ) {
                                         topic.subtopics.forEach { sub ->
-                                            Row(
+                                            Surface(
+                                                color = Transparent,
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .clickable {
-                                                        navController.navigate("feed?tag=$sub")
+                                                        navController.navigate("feed?tag=$sub") {
+                                                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                                            launchSingleTop = false
+                                                        }
                                                     }
-                                                    .padding(vertical = 8.dp),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Text(sub, color = Slate300, fontSize = 14.sp)
-                                                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Slate600, modifier = Modifier.size(16.dp))
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(sub, color = Slate300, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                                                    Icon(Icons.Default.ChevronRight
+                                                        , contentDescription = null, tint = Slate600, modifier = Modifier.size(16.dp))
+                                                }
                                             }
                                         }
                                     }
@@ -326,4 +357,3 @@ fun DashboardScreen(navController: NavController, sessionManager: SessionManager
         }
     }
 }
-val Slate200 = Color(0xFFE2E8F0)

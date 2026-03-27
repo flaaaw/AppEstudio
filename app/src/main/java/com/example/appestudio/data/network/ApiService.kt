@@ -38,6 +38,7 @@ interface ApiService {
     @POST("api/posts")
     suspend fun createPost(
         @Part("author")   author:  RequestBody,
+        @Part("authorId") authorId: RequestBody,
         @Part("title")    title:   RequestBody,
         @Part("content")  content: RequestBody,
         @Part("tags")     tags:    RequestBody?,
@@ -116,6 +117,16 @@ interface ApiService {
     // --- VIDEOS ---
     @GET("api/videos")
     suspend fun getVideos(@Query("topic") topic: String? = null): Response<List<VideoDto>>
+
+    @Multipart
+    @POST("api/videos")
+    suspend fun uploadVideo(
+        @Part("title") title: RequestBody,
+        @Part("description") description: RequestBody,
+        @Part("topic") topic: RequestBody,
+        @Part("duration") duration: RequestBody?,
+        @Part file: MultipartBody.Part
+    ): Response<VideoDto>
 
     @POST("api/videos/{id}/view")
     suspend fun incrementView(@Path("id") videoId: String): Response<Map<String, Boolean>>

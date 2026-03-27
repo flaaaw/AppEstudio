@@ -34,6 +34,7 @@ import androidx.navigation.NavController
 import com.example.appestudio.data.models.LoginRequest
 import com.example.appestudio.data.models.RegisterRequest
 import com.example.appestudio.data.network.RetrofitClient
+import com.example.appestudio.data.network.SocketHandler
 import com.example.appestudio.navigation.Screen
 import com.example.appestudio.ui.theme.*
 import com.google.gson.Gson
@@ -267,6 +268,7 @@ fun LoginView(sessionManager: SessionManager? = null, onLogin: () -> Unit) {
                                     id       = body.user.id,
                                     semester = body.user.semester
                                 )
+                                SocketHandler.getSocket()?.emit("join", body.user.id)
                             }
                             onLogin()
                         } else {
@@ -372,6 +374,7 @@ fun RegisterView(sessionManager: SessionManager? = null, onRegister: () -> Unit)
                                     id       = body.user.id,
                                     semester = body.user.semester
                                 )
+                                SocketHandler.getSocket()?.emit("join", body.user.id)
                             }
                             onRegister()
                         } else {

@@ -8,8 +8,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
@@ -69,106 +71,177 @@ fun CreatePostModal(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = Slate900,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(Slate700)
+            )
+        },
         modifier = Modifier.fillMaxHeight(0.92f)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 8.dp)
+                .padding(horizontal = 24.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Nueva Publicación", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Slate400)
+                Column {
+                    Text("Nueva Publicación", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+                    Text("Comparte tus dudas o material", color = Slate500, fontSize = 13.sp)
+                }
+                Surface(
+                    onClick = onDismiss,
+                    shape = CircleShape,
+                    color = Slate800,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.Close, contentDescription = "Close", tint = Slate400, modifier = Modifier.size(20.dp))
+                    }
                 }
             }
 
             errorMsg?.let {
-                Box(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
-                    .background(Red500.copy(alpha=0.1f), RoundedCornerShape(12.dp))
-                    .border(1.dp, Red500.copy(alpha=0.3f), RoundedCornerShape(12.dp)).padding(12.dp)) {
-                    Text(it, color = Red500, fontSize = 13.sp)
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    color = Red500.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, Red500.copy(alpha = 0.2f))
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.ErrorOutline, null, tint = Red500, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(it, color = Red500, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    }
                 }
             }
 
             // Title
-            Text("Título", color = Slate400, fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(bottom = 8.dp))
+            Text("Título del Post", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(bottom = 8.dp))
             OutlinedTextField(
-                value = title, onValueChange = { title = it },
-                placeholder = { Text("Ej. Duda sobre matrices...", color = Slate500) },
+                value = title, 
+                onValueChange = { title = it },
+                placeholder = { Text("Ej: Ayuda con Cálculo III", color = Slate500) },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Emerald500, unfocusedBorderColor = Slate700,
-                    focusedTextColor = Color.White, unfocusedTextColor = Color.White,
-                    focusedContainerColor = Slate800, unfocusedContainerColor = Slate800
+                    focusedBorderColor = Emerald500,
+                    unfocusedBorderColor = Slate700,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedContainerColor = Slate800,
+                    unfocusedContainerColor = Slate800
                 ),
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Content
-            Text("Contenido", color = Slate400, fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(bottom = 8.dp))
+            Text("Contenido o Pregunta", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(bottom = 8.dp))
             OutlinedTextField(
-                value = content, onValueChange = { content = it },
-                placeholder = { Text("Escribe tu publicación aquí...", color = Slate500) },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
-                shape = RoundedCornerShape(12.dp),
+                value = content, 
+                onValueChange = { content = it },
+                placeholder = { Text("Describe tu duda con detalle...", color = Slate500) },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 140.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Emerald500, unfocusedBorderColor = Slate700,
-                    focusedTextColor = Color.White, unfocusedTextColor = Color.White,
-                    focusedContainerColor = Slate800, unfocusedContainerColor = Slate800
+                    focusedBorderColor = Emerald500,
+                    unfocusedBorderColor = Slate700,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedContainerColor = Slate800,
+                    unfocusedContainerColor = Slate800
                 ),
-                minLines = 4
+                minLines = 5
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Tags
-            Text("Etiquetas (separadas por coma)", color = Slate400, fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(bottom = 8.dp))
+            Text("Etiquetas", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(bottom = 8.dp))
             OutlinedTextField(
-                value = tags, onValueChange = { tags = it },
-                placeholder = { Text("Ej. Matemáticas, Duda", color = Slate500) },
+                value = tags, 
+                onValueChange = { tags = it },
+                placeholder = { Text("matemáticas, duda, examen...", color = Slate500) },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                leadingIcon = { Icon(Icons.Default.LocalOffer, null, tint = Emerald500, modifier = Modifier.size(18.dp)) },
+                shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Emerald500, unfocusedBorderColor = Slate700,
-                    focusedTextColor = Color.White, unfocusedTextColor = Color.White,
-                    focusedContainerColor = Slate800, unfocusedContainerColor = Slate800
+                    focusedBorderColor = Emerald500,
+                    unfocusedBorderColor = Slate700,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedContainerColor = Slate800,
+                    unfocusedContainerColor = Slate800
                 ),
                 singleLine = true
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // File Picker
-            OutlinedButton(
-                onClick = { filePicker.launch("*/*") },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, if (selectedFileUri != null) Emerald500 else Slate700),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = if (selectedFileUri != null) Emerald400 else Slate400, containerColor = Slate800)
-            ) {
-                Icon(
-                    if (selectedFileUri != null) Icons.Default.CheckCircle else Icons.Default.AttachFile,
-                    contentDescription = null, modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(selectedFileName ?: "Adjuntar archivo (imagen, PDF, audio)", fontSize = 14.sp)
-            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // File Picker
+            Surface(
+                onClick = { filePicker.launch("*/*") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                color = Slate800,
+                border = BorderStroke(1.dp, if (selectedFileUri != null) Emerald500 else Slate700.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier.size(44.dp).clip(CircleShape).background(if (selectedFileUri != null) Emerald500.copy(alpha = 0.15f) else Slate700.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            if (selectedFileUri != null) Icons.Default.CheckCircle else Icons.Default.Share,
+                            contentDescription = null, 
+                            tint = if (selectedFileUri != null) Emerald500 else Slate400,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            if (selectedFileUri != null) "Archivo seleccionado" else "Adjuntar material", 
+                            color = Color.White, 
+                            fontSize = 14.sp, 
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            selectedFileName ?: "Imagen, PDF o Documento", 
+                            color = Slate500, 
+                            fontSize = 12.sp,
+                            maxLines = 1
+                        )
+                    }
+                    if (selectedFileUri != null) {
+                        IconButton(onClick = { selectedFileUri = null; selectedFileName = null }) {
+                            Icon(Icons.Default.Delete, null, tint = Red500, modifier = Modifier.size(20.dp))
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Post Button
             Button(
                 onClick = {
                     if (title.isBlank() || content.isBlank()) {
-                        errorMsg = "El título y el contenido son requeridos"
+                        errorMsg = "Completa los campos obligatorios"
                         return@Button
                     }
                     scope.launch {
@@ -199,34 +272,35 @@ fun CreatePostModal(
                             }
 
                             val response = RetrofitClient.instance.createPost(
-                                authorBody, titleBody, contentBody, tagsBody, filePart
+                                authorBody, authorIdBody, titleBody, contentBody, tagsBody, filePart
                             )
                             if (response.isSuccessful) {
                                 onPostCreated()
                             } else {
-                                errorMsg = "Error al publicar (${response.code()})"
+                                errorMsg = "Falló la publicación: ${response.code()}"
                             }
                         } catch (e: Exception) {
-                            errorMsg = "Sin conexión al servidor"
+                            errorMsg = "Error de red: ${e.message}"
                         }
                         isLoading = false
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().height(60.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Emerald500),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
                 enabled = !isLoading
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 3.dp)
                 } else {
-                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Publicar", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Icon(Icons.Default.RocketLaunch, null, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Publicar Ahora", fontSize = 17.sp, fontWeight = FontWeight.Black)
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(48.dp))
         }
     }
 }
