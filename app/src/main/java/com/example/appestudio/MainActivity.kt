@@ -25,10 +25,15 @@ import com.example.appestudio.ui.theme.AppEstudioTheme
 import com.example.appestudio.ui.theme.Slate900
 import com.example.appestudio.data.SessionManager
 import com.example.appestudio.data.network.RetrofitClient
+import com.example.appestudio.data.network.SocketHandler
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize Socket.IO
+        SocketHandler.setSocket()
+        SocketHandler.establishConnection()
         setContent {
             AppEstudioTheme {
                 val sessionManager = remember { SessionManager(applicationContext) }
@@ -76,5 +81,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        SocketHandler.closeConnection()
     }
 }

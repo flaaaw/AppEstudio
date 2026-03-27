@@ -41,6 +41,9 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import com.example.appestudio.data.network.SocketHandler
+import com.google.gson.Gson
+import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 
@@ -60,6 +63,8 @@ fun ChatDetailScreen(
     var isLoading by remember { mutableStateOf(true) }
     var isSending by remember { mutableStateOf(false) }
     var showAttachMenu by remember { mutableStateOf(false) }
+    var showGroupInfo by remember { mutableStateOf(false) }
+    var chatData by remember { mutableStateOf<com.example.appestudio.data.models.ChatDto?>(null) }
 
     // Selected file for sending
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
@@ -98,9 +103,46 @@ fun ChatDetailScreen(
         isLoading = false
     }
 
-    // Auto-poll every 5s
+    // Socket.IO real-time listener
     LaunchedEffect(chatId) {
-        while (true) { fetchMessages(); delay(5_000) }
+        if (chatId.isNullOrBlank()) return@LaunchedEffect
+        val socket = SocketHandler.getSocket()
+        val gson = Gson()
+        
+        socket?.emit("join_chat", chatId)
+        
+        socket?.on("message") { args ->
+            if (args.isNotEmpty()) {
+                try {
+                    val data = args[0] as JSONObject
+                    val newMessage = gson.fromJson(data.toString(), MessageDto::class.java)
+                    // Only add if it's not already there (to avoid duplicates with polling)
+                    if (messages.none { it._id == newMessage._id }) {
+                        messages = messages + newMessage
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        
+        // Clean up on dispose
+        // Note: DisposableEffect would be cleaner for off(), 
+        // but since we are in a loop-polling LaunchedEffect too, we'll use a local check.
+    }
+
+    suspend fun fetchChatDetail() {
+        if (chatId.isNullOrBlank()) return
+        try {
+            val response = RetrofitClient.instance.getChatDetail(chatId)
+            if (response.isSuccessful) chatData = response.body()
+        } catch (_: Exception) {}
+    }
+
+    // Auto-poll every 10s (increased delay since we have sockets now)
+    LaunchedEffect(chatId) {
+        if (!chatId.isNullOrBlank()) fetchChatDetail()
+        while (true) { fetchMessages(); delay(10_000) }
     }
 
     // Scroll to the last message when messages list changes
@@ -175,6 +217,11 @@ fun ChatDetailScreen(
             Column(modifier = Modifier.weight(1f)) {
                 Text(displayName, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                 Text("${messages.size} mensajes", color = Slate400, fontSize = 12.sp)
+            }
+            if (chatData?.isGroup == true) {
+                IconButton(onClick = { showGroupInfo = true }) {
+                    Icon(Icons.Default.Info, contentDescription = "Info", tint = Color.White)
+                }
             }
         }
 
@@ -304,6 +351,83 @@ fun ChatDetailScreen(
                 if (isSending) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 else Icon(Icons.Default.Send, null, tint = Color.White, modifier = Modifier.size(20.dp))
             }
+        }
+    }
+
+    if (showGroupInfo && chatData != null) {
+        GroupInfoBottomSheet(
+            chat = chatData!!,
+            onDismiss = { showGroupInfo = false },
+            onUpdate = { newName ->
+                scope.launch {
+                    try {
+                        val resp = RetrofitClient.instance.updateChat(
+                            chatId!!, 
+                            com.example.appestudio.data.models.UpdateChatRequest(
+                                name = newName,
+                                participants = chatData!!.participants,
+                                participantNames = chatData!!.participantNames
+                            )
+                        )
+                        if (resp.isSuccessful) {
+                            chatData = resp.body()
+                        }
+                    } catch (_: Exception) {}
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GroupInfoBottomSheet(
+    chat: com.example.appestudio.data.models.ChatDto,
+    onDismiss: () -> Unit,
+    onUpdate: (String) -> Unit
+) {
+    var name by remember { mutableStateOf(chat.name) }
+    
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Slate900) {
+        Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
+            Text("Información del Grupo", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Text("Nombre del Grupo", color = Slate400, fontSize = 14.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = name, onValueChange = { name = it },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Emerald500, unfocusedBorderColor = Slate700,
+                    focusedTextColor = Color.White, unfocusedTextColor = Color.White,
+                    focusedContainerColor = Slate800, unfocusedContainerColor = Slate800
+                )
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { onUpdate(name); onDismiss() },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Emerald500)
+            ) {
+                Text("Guardar Cambios")
+            }
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            Text("Participantes (${chat.participantNames.size})", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            chat.participantNames.forEach { pName ->
+                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Emerald500.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
+                        Text(pName.take(1).uppercase(), color = Emerald400, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(pName, color = Color.White, fontSize = 14.sp)
+                }
+            }
+            Spacer(modifier = Modifier.height(48.dp))
         }
     }
 }

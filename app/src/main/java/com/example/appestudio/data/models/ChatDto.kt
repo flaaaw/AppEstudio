@@ -39,3 +39,10 @@ data class CreateChatRequest(
     val isGroup: Boolean = false,
     val groupName: String = ""
 )
+
+// Request body for PUT /api/chats/:chatId
+data class UpdateChatRequest(
+    val name: String,
+    val participants: List<String>,
+    val participantNames: List<String>
+)

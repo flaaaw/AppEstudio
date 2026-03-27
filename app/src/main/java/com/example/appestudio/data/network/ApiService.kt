@@ -76,6 +76,9 @@ interface ApiService {
     suspend fun addComment(@Path("id") postId: String, @Body request: CreateCommentRequest): Response<CommentDto>
 
     // --- CHATS ---
+    @GET("api/chats/one/{chatId}")
+    suspend fun getChatDetail(@Path("chatId") chatId: String): Response<ChatDto>
+
     @GET("api/chats/{userId}")
     suspend fun getChats(@Path("userId") userId: String): Response<List<ChatDto>>
 
@@ -84,6 +87,9 @@ interface ApiService {
 
     @GET("api/chats/{chatId}/messages")
     suspend fun getMessages(@Path("chatId") chatId: String): Response<List<MessageDto>>
+
+    @PUT("api/chats/{chatId}")
+    suspend fun updateChat(@Path("chatId") chatId: String, @Body request: UpdateChatRequest): Response<ChatDto>
 
     @POST("api/chats/{chatId}/messages")
     suspend fun sendMessage(

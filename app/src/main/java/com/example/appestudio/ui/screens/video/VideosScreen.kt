@@ -37,6 +37,7 @@ fun VideosScreen(navController: NavController, sessionManager: SessionManager? =
     var videos by remember { mutableStateOf<List<VideoDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
+    var playingVideoUrl by remember { mutableStateOf<String?>(null) }
 
     suspend fun loadVideos() {
         isLoading = true; errorMsg = null
@@ -92,33 +93,40 @@ fun VideosScreen(navController: NavController, sessionManager: SessionManager? =
                 }
             }
             else -> items(videos) { video ->
-                VideoCard(video = video)
+                VideoCard(video = video, onClick = { playingVideoUrl = it })
+            }
+        }
+    }
+
+    // Full screen video overlay
+    if (playingVideoUrl != null) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(Color.Black).clickable(enabled = false) {}
+        ) {
+            VideoPlayer(
+                videoUrl = playingVideoUrl!!,
+                modifier = Modifier.fillMaxSize().align(Alignment.Center)
+            )
+            
+            // Close button
+            IconButton(
+                onClick = { playingVideoUrl = null },
+                modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).background(Color.Black.copy(alpha = 0.5f), CircleShape)
+            ) {
+                Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = Color.White)
             }
         }
     }
 }
 
 @Composable
-fun VideoCard(video: VideoDto) {
+fun VideoCard(video: VideoDto, onClick: (String) -> Unit) {
     val context = LocalContext.current
     Box(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)
             .clip(RoundedCornerShape(16.dp)).background(Slate800)
             .border(1.dp, Slate700.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
-            .clickable {
-                // Open video URL in external player
-                val uri = android.net.Uri.parse(video.videoUrl)
-                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri).apply {
-                    setDataAndType(uri, "video/*")
-                    flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-                }
-                try {
-                    context.startActivity(intent)
-                } catch (_: android.content.ActivityNotFoundException) {
-                    // fallback: try opening as generic URL
-                    context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(video.videoUrl)))
-                }
-            }
+            .clickable { onClick(video.videoUrl) }
     ) {
         Column {
             // Thumbnail

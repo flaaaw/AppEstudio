@@ -162,8 +162,8 @@ fun ChatItem(
         modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(modifier = Modifier.size(56.dp).clip(CircleShape).background(if (isGroup) Slate800 else Slate700), contentAlignment = Alignment.Center) {
-            if (isGroup) Icon(Icons.Default.People, contentDescription = null, tint = Slate400)
+        Box(modifier = Modifier.size(56.dp).clip(CircleShape).background(if (isGroup) Emerald600.copy(alpha = 0.8f) else Slate700), contentAlignment = Alignment.Center) {
+            if (isGroup) Icon(Icons.Default.Groups, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
             else Text(name.take(1).uppercase(), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             if (isOnline) Box(modifier = Modifier.align(Alignment.BottomEnd).offset(x = (-2).dp, y = (-2).dp).size(14.dp).clip(CircleShape).background(Emerald500))
         }
