@@ -91,6 +91,26 @@ class FeedViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun searchPosts(query: String) {
+        if (query.isBlank()) {
+            loadPosts()
+            return
+        }
+        viewModelScope.launch {
+            _uiState.value = FeedUiState.Loading
+            try {
+                val response = RetrofitClient.instance.searchPosts(query)
+                if (response.isSuccessful) {
+                    _uiState.value = FeedUiState.Success(response.body() ?: emptyList())
+                } else {
+                    _uiState.value = FeedUiState.Error("Error en la búsqueda")
+                }
+            } catch (e: Exception) {
+                _uiState.value = FeedUiState.Error("Error de red")
+            }
+        }
+    }
+
     fun loadMorePosts() {
         if (!isEndReached && !isCurrentlyLoading) {
             loadPosts(isRefresh = false)

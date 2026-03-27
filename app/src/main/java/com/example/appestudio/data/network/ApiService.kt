@@ -22,6 +22,11 @@ interface ApiService {
         @Query("limit") limit: Int = 10
     ): Response<List<PostDto>>
 
+    @GET("api/posts/search")
+    suspend fun searchPosts(
+        @Query("q") query: String
+    ): Response<List<PostDto>>
+
     @GET("api/posts/user/{userId}")
     suspend fun getPostsByUser(
         @Path("userId") userId: String,
