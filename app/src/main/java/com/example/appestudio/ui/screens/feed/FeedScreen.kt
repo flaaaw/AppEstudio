@@ -87,7 +87,12 @@ fun FeedScreen(
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { showCreatePost = true }, containerColor = Emerald500, contentColor = Color.White) {
+            FloatingActionButton(
+                onClick = { showCreatePost = true },
+                containerColor = Emerald500,
+                contentColor = Color.White,
+                shape = CircleShape
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Nueva publicación")
             }
         },
@@ -106,38 +111,68 @@ fun FeedScreen(
             ) {
                 item {
                     // Header row
-                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 0.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Comunidad", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                        IconButton(onClick = { showSearch = !showSearch }) {
-                            Icon(if (showSearch) Icons.Default.Close else Icons.Default.Search, contentDescription = "Buscar", tint = Slate400)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 0.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Comunidad", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
+                        IconButton(
+                            onClick = { showSearch = !showSearch },
+                            modifier = Modifier.background(Slate800, CircleShape)
+                        ) {
+                            Icon(if (showSearch) Icons.Default.Close else Icons.Default.Search, contentDescription = "Buscar", tint = Emerald400, modifier = Modifier.size(20.dp))
                         }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Search
                     if (showSearch) {
                         OutlinedTextField(
-                            value = searchQuery, onValueChange = { searchQuery = it },
+                            value = searchQuery,
+                            onValueChange = { 
+                                searchQuery = it 
+                                // Simplified server search: empty = load all, else search
+                                scope.launch { feedViewModel.searchPosts(it) }
+                            },
                             placeholder = { Text("Buscar publicaciones...", color = Slate500) },
-                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Slate500) },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Emerald500) },
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(20.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Emerald500, unfocusedBorderColor = Slate700,
-                                focusedTextColor = Color.White, unfocusedTextColor = Color.White,
-                                focusedContainerColor = Slate800, unfocusedContainerColor = Slate800
+                                focusedBorderColor = Emerald500,
+                                unfocusedBorderColor = Slate700,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedContainerColor = Slate800,
+                                unfocusedContainerColor = Slate800
                             ),
                             singleLine = true
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
 
                     // Filters
-                    LazyRow(contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(bottom = 24.dp)) {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.padding(bottom = 24.dp)
+                    ) {
                         items(listOf("Todos", "Dudas", "Material", "Programación", "Matemáticas")) { item ->
                             val isSelected = filter == item
-                            Box(modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(if (isSelected) Emerald500 else Slate800).clickable { filter = item }.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                                Text(item, color = if (isSelected) Color.White else Slate400, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(30.dp))
+                                    .background(if (isSelected) Emerald500 else Slate800)
+                                    .border(1.dp, if (isSelected) Emerald400 else Slate700, RoundedCornerShape(30.dp))
+                                    .clickable { 
+                                        filter = item
+                                        if (item == "Todos") feedViewModel.loadPosts()
+                                        // Filter locally for now, server search is via query
+                                    }
+                                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                            ) {
+                                Text(item, color = if (isSelected) Color.White else Slate300, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
@@ -145,19 +180,17 @@ fun FeedScreen(
 
                 when (val state = uiState) {
                     is FeedUiState.Loading -> {
-                        items(5) {
-                            ShimmerPostItem()
-                        }
+                        items(5) { ShimmerPostItem() }
                     }
                     is FeedUiState.Error -> {
                         item {
                             Column(modifier = Modifier.fillParentMaxSize().padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                                Icon(Icons.Default.WifiOff, contentDescription = null, tint = Slate500, modifier = Modifier.size(48.dp))
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(state.message, color = Slate400, fontSize = 14.sp)
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Button(onClick = { feedViewModel.loadPosts() }, colors = ButtonDefaults.buttonColors(containerColor = Emerald500)) {
-                                    Text("Reintentar")
+                                Icon(Icons.Default.CloudOff, contentDescription = null, tint = Slate500, modifier = Modifier.size(60.dp))
+                                Spacer(modifier = Modifier.height(20.dp))
+                                Text(state.message, color = Slate400, fontSize = 15.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Button(onClick = { feedViewModel.loadPosts() }, colors = ButtonDefaults.buttonColors(containerColor = Emerald500), shape = RoundedCornerShape(12.dp)) {
+                                    Text("Intentar de nuevo")
                                 }
                             }
                         }
@@ -165,16 +198,16 @@ fun FeedScreen(
                     is FeedUiState.Success -> {
                         val filtered = state.posts.filter { post ->
                             val matchesFilter = filter == "Todos" || post.tags.any { it.equals(filter, ignoreCase = true) }
-                            val matchesSearch = searchQuery.isBlank() || post.title.contains(searchQuery, ignoreCase = true) || post.content.contains(searchQuery, ignoreCase = true) || post.author.contains(searchQuery, ignoreCase = true)
-                            matchesFilter && matchesSearch
+                            // Server already filters search if query is sent, but we keep local filter for UI consistency
+                            matchesFilter
                         }
 
                         if (filtered.isEmpty() && !isLoading) {
                             item {
                                 Column(modifier = Modifier.fillParentMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                                    Icon(Icons.Default.Inbox, null, tint = Slate600, modifier = Modifier.size(64.dp))
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Text("No hay publicaciones en esta categoría", color = Slate500, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                                    Icon(Icons.Default.Topic, null, tint = Slate700, modifier = Modifier.size(80.dp).padding(bottom = 16.dp))
+                                    Text("¡Aún no hay nada aquí!", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                    Text("Sé el primero en compartir algo interesante.", color = Slate500, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                                 }
                             }
                         } else {
@@ -211,30 +244,46 @@ fun PostCard(
     val isImageUrl = !post.mediaUrl.isNullOrBlank() &&
         (post.mediaUrl.contains("cloudinary") || post.mediaUrl.endsWith(".jpg") || post.mediaUrl.endsWith(".png") || post.mediaUrl.endsWith(".jpeg") || post.mediaUrl.endsWith(".webp"))
 
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(16.dp)).background(Slate800)
-            .border(1.dp, Slate700.copy(alpha = 0.5f), RoundedCornerShape(16.dp)).padding(20.dp)
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 10.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = Slate800),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
-        Column {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(Slate700), contentAlignment = Alignment.Center) {
-                    Text(post.author.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                // Author Avatar
+                Box(
+                    modifier = Modifier
+                        .size(45.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(listOf(Emerald500, Emerald700))
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(post.author.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(post.author, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                    Text(post.createdAt.toRelativeTime(), color = Slate400, fontSize = 12.sp)
+                    Text(post.author, color = Color.LightGray, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.AccessTime, null, tint = Slate500, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(post.createdAt.toRelativeTime(), color = Slate500, fontSize = 11.sp)
+                    }
                 }
                 if (isOwner) {
                     Box {
                         IconButton(onClick = { showMenu = true }, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.MoreVert, contentDescription = null, tint = Slate500, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.MoreHoriz, contentDescription = null, tint = Slate400)
                         }
                         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }, containerColor = Slate800) {
                             DropdownMenuItem(
                                 text = { Text("Eliminar publicación", color = Red500) },
-                                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Red500) },
+                                leadingIcon = { Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = Red500) },
                                 onClick = {
                                     showMenu = false
                                     scope.launch {
@@ -250,49 +299,68 @@ fun PostCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(post.title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(post.content, color = Slate300, fontSize = 14.sp, lineHeight = 20.sp)
+            Spacer(modifier = Modifier.height(18.dp))
+            Text(post.title, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.5.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(post.content, color = Slate200, fontSize = 15.sp, lineHeight = 22.sp)
 
-            // Image preview (Cloudinary image)
+            // Dynamic Content Placement
             if (isImageUrl) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 AsyncImage(
                     model = post.mediaUrl,
-                    contentDescription = "Imagen adjunta",
-                    modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp).clip(RoundedCornerShape(12.dp)),
+                    contentDescription = "Post image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 280.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .border(1.dp, Slate700.copy(alpha = 0.3f), RoundedCornerShape(20.dp)),
                     contentScale = ContentScale.Crop
                 )
             } else if (!post.mediaUrl.isNullOrBlank()) {
-                // Non-image attachment
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.background(Emerald500.copy(alpha = 0.1f), RoundedCornerShape(8.dp)).border(1.dp, Emerald500.copy(alpha = 0.2f), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Spacer(modifier = Modifier.height(16.dp))
+                Surface(
+                    color = Emerald500.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, Emerald500.copy(alpha = 0.2f))
                 ) {
-                    Icon(Icons.Default.AttachFile, contentDescription = null, tint = Emerald400, modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Archivo adjunto", color = Emerald400, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, tint = Emerald400, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text("Documento adjunto", color = Emerald400, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             if (post.tags.isNotEmpty()) {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(post.tags) { tag ->
-                        Box(modifier = Modifier.background(Slate900.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
-                            Text(tag, color = Emerald400, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                        Surface(
+                            color = Slate900.copy(alpha = 0.6f),
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, Slate700)
+                        ) {
+                            Text(
+                                "#$tag",
+                                color = Emerald400,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            )
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
             }
 
-            HorizontalDivider(color = Slate700.copy(alpha = 0.5f))
+            HorizontalDivider(color = Slate700.copy(alpha = 0.4f), thickness = 1.dp)
             Spacer(modifier = Modifier.height(12.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
                     scope.launch {
                         try {
@@ -303,24 +371,30 @@ fun PostCard(
                                 likesCount = body.likes
                             }
                         } catch (_: Exception) {
-                            // toggle locally on failure
                             isLiked = !isLiked
                             likesCount += if (isLiked) 1 else -1
                         }
                     }
-                }) {
-                    Icon(if (isLiked) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder, contentDescription = null, tint = if (isLiked) Red500 else Slate400, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(likesCount.toString(), color = Slate400, fontSize = 14.sp)
+                }.padding(8.dp)) {
+                    Icon(
+                        if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = null,
+                        tint = if (isLiked) Red500 else Slate500,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(likesCount.toString(), color = if (isLiked) Color.White else Slate500, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 }
+                
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
                     navController.navigate("comments/${post._id}")
-                }) {
-                    Icon(Icons.Outlined.ChatBubbleOutline, contentDescription = null, tint = Slate400, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(post.comments.toString(), color = Slate400, fontSize = 14.sp)
+                }.padding(8.dp)) {
+                    Icon(Icons.AutoMirrored.Outlined.ChatBubbleOutline, contentDescription = null, tint = Slate500, modifier = Modifier.size(22.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(post.comments.toString(), color = Slate500, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
+                
+                IconButton(onClick = {
                     val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                         type = "text/plain"
                         putExtra(android.content.Intent.EXTRA_SUBJECT, post.title)
@@ -328,9 +402,7 @@ fun PostCard(
                     }
                     context.startActivity(android.content.Intent.createChooser(shareIntent, "Compartir via"))
                 }) {
-                    Icon(Icons.Outlined.Share, contentDescription = null, tint = Slate400, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Compartir", color = Slate400, fontSize = 14.sp)
+                    Icon(Icons.Default.Share, contentDescription = null, tint = Slate500, modifier = Modifier.size(22.dp))
                 }
             }
         }
