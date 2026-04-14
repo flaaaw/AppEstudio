@@ -119,7 +119,7 @@ fun PostCard(
             if (isImageUrl) {
                 Spacer(modifier = Modifier.height(16.dp))
                 AsyncImage(
-                    model = post.mediaUrl,
+                    model = post.mediaUrl?.replace("http://", "https://"),
                     contentDescription = "Post image",
                     modifier = Modifier
                         .fillMaxWidth()
