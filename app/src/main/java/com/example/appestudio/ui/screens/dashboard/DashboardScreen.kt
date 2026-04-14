@@ -382,4 +382,68 @@ fun DashboardScreen(navController: NavController, sessionManager: SessionManager
             }
         }
     }
+
+    if (showNotifications) {
+        NotificationsBottomSheet(onDismiss = { showNotifications = false })
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NotificationsBottomSheet(onDismiss: () -> Unit) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = Slate900,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(Slate700)
+            )
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+        ) {
+            Text("Notificaciones", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Novedades y actualizaciones recientes", color = Slate500, fontSize = 14.sp)
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            val fakeNotifications = listOf(
+                "¡Nueva clase de Matemáticas disponible!" to "Hace 2 horas",
+                "Alguien respondió a tu duda en la comunidad." to "Hace 5 horas",
+                "Recordatorio: Entrega del proyecto el viernes." to "Ayer"
+            )
+            
+            fakeNotifications.forEach { (text, time) ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = Emerald500.copy(alpha = 0.15f),
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.NotificationsActive, contentDescription = null, tint = Emerald500, modifier = Modifier.size(24.dp))
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(text, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text(time, color = Slate400, fontSize = 13.sp)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(48.dp))
+        }
+    }
 }

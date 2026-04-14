@@ -89,6 +89,18 @@ fun UploadVideoModal(
                 cursor.moveToFirst()
                 cursor.getString(idx)
             } ?: "video.mp4"
+            
+            try {
+                val retriever = android.media.MediaMetadataRetriever()
+                retriever.setDataSource(context, it)
+                val timeStr = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
+                val time = timeStr?.toLongOrNull() ?: 0L
+                retriever.release()
+                val sec = time / 1000
+                duration = String.format(java.util.Locale.US, "%02d:%02d", sec / 60, sec % 60)
+            } catch (e: Exception) {
+               duration = ""
+            }
         }
     }
 
@@ -165,22 +177,7 @@ fun UploadVideoModal(
                 ),
                 singleLine = true
             )
-            Spacer(modifier = Modifier.height(12.dp))
-            OutlinedTextField(
-                value = duration,
-                onValueChange = { duration = it },
-                placeholder = { Text("Duración (ej. 12:45)", color = Slate500) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Emerald500,
-                    unfocusedBorderColor = Slate700,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedContainerColor = Slate800,
-                    unfocusedContainerColor = Slate800
-                ),
-                singleLine = true
-            )
+
 
             Spacer(modifier = Modifier.height(16.dp))
             Button(
@@ -194,7 +191,8 @@ fun UploadVideoModal(
                     contentDescription = null
                 )
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(selectedName ?: "Seleccionar video", color = Color.White)
+                val btnText = if (selectedUri != null && duration.isNotEmpty()) "${selectedName} ($duration)" else selectedName ?: "Seleccionar video"
+                Text(btnText, color = Color.White)
             }
 
             Spacer(modifier = Modifier.height(20.dp))

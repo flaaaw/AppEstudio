@@ -3,7 +3,7 @@
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
         <!-- Set the splash screen background, icon and its background. -->
         <item name="windowSplashScreenBackground">#0F172A</item> <!-- Slate900 -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo_vector</item>
         
         <!-- Sets the theme of the Activity that directly follows the splash screen. -->
         <item name="postSplashScreenTheme">@style/Theme.AppEstudio</item>
