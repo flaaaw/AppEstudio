@@ -11,6 +11,7 @@ import com.example.appestudio.data.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import com.example.appestudio.data.models.TagStatDto
 
 sealed class FeedUiState {
     object Loading : FeedUiState()
@@ -25,6 +26,9 @@ class FeedViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow<FeedUiState>(FeedUiState.Loading)
     val uiState: StateFlow<FeedUiState> = _uiState
+    
+    private val _topTags = MutableStateFlow<List<String>>(listOf("Todos", "Dudas", "Material", "Programación", "Matemáticas"))
+    val topTags: StateFlow<List<String>> = _topTags
 
     private var currentPage = 1
     private var isEndReached = false
@@ -33,6 +37,24 @@ class FeedViewModel(application: Application) : AndroidViewModel(application) {
     init { 
         loadFromCache()
         loadPosts() 
+        loadTags()
+    }
+
+    private fun loadTags() {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.instance.getPostStats()
+                if (response.isSuccessful) {
+                    val stats = response.body() ?: emptyList()
+                    val dynamicTags = mutableListOf("Todos")
+                    // Adding top 8 tags dynamically
+                    dynamicTags.addAll(stats.take(8).map { it._id })
+                    if (dynamicTags.size > 1) {
+                        _topTags.value = dynamicTags
+                    }
+                }
+            } catch (_: Exception) {}
+        }
     }
 
     private fun loadFromCache() {

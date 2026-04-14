@@ -52,6 +52,7 @@ fun FeedScreen(
     val listState = rememberLazyListState()
     val pullToRefreshState = rememberPullToRefreshState()
     val uiState by feedViewModel.uiState.collectAsState()
+    val topTags by feedViewModel.topTags.collectAsState()
     var filter by remember { mutableStateOf("Todos") }
     var showCreatePost by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
@@ -167,7 +168,7 @@ fun FeedScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier.padding(bottom = 24.dp)
                     ) {
-                        items(listOf("Todos", "Dudas", "Material", "Programación", "Matemáticas")) { item ->
+                        items(topTags) { item ->
                             val isSelected = filter == item
                             Box(
                                 modifier = Modifier

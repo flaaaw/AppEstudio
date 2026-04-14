@@ -32,6 +32,8 @@ import coil.compose.AsyncImage
 import com.example.appestudio.data.SessionManager
 import com.example.appestudio.navigation.Screen
 import com.example.appestudio.ui.theme.*
+import com.example.appestudio.data.network.RetrofitClient
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.BorderStroke
 
 data class Topic(
@@ -58,8 +60,32 @@ fun DashboardScreen(navController: NavController, sessionManager: SessionManager
     var searchQuery by remember { mutableStateOf("") }
     var showNotifications by remember { mutableStateOf(false) }
     var expandedTopicId by remember { mutableStateOf<String?>(null) }
+    
+    var dynamicTopics by remember { mutableStateOf(topics) }
+    
+    LaunchedEffect(Unit) {
+        try {
+            val response = RetrofitClient.instance.getPostStats()
+            if (response.isSuccessful) {
+                val stats = response.body() ?: emptyList()
+                val updatedTopics = topics.map { topic ->
+                    val apiCount = stats.filter { stat ->
+                        stat._id.equals(topic.name, ignoreCase = true) || 
+                        topic.subtopics.any { sub -> stat._id.equals(sub, ignoreCase = true) } ||
+                        stat._id.equals(topic.id, ignoreCase = true)
+                    }.sumOf { it.count }
+                    // Update only if we have real counts, otherwise keep showing some activity or 0.
+                    // For a realistic app, we show the apiCount. If 0, it means no posts yet.
+                    topic.copy(count = apiCount)
+                }
+                dynamicTopics = updatedTopics
+            }
+        } catch (_: Exception) {
+            // keep default in case of error
+        }
+    }
 
-    val filteredTopics = topics.filter {
+    val filteredTopics = dynamicTopics.filter {
         it.name.contains(searchQuery, ignoreCase = true) ||
                 it.subtopics.any { sub -> sub.contains(searchQuery, ignoreCase = true) }
     }

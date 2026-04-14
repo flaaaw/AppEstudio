@@ -16,6 +16,9 @@ interface ApiService {
     suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
 
     // --- POSTS ---
+    @GET("api/posts/stats")
+    suspend fun getPostStats(): Response<List<TagStatDto>>
+
     @GET("api/posts")
     suspend fun getPosts(
         @Query("page") page: Int = 1,
@@ -115,6 +118,9 @@ interface ApiService {
     ): Response<MessageDto>
 
     // --- VIDEOS ---
+    @GET("api/videos/stats")
+    suspend fun getVideoStats(): Response<List<TagStatDto>>
+
     @GET("api/videos")
     suspend fun getVideos(@Query("topic") topic: String? = null): Response<List<VideoDto>>
 

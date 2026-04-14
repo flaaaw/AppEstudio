@@ -31,17 +31,30 @@ import com.example.appestudio.ui.theme.*
 import com.example.appestudio.utils.toRelativeTime
 import kotlinx.coroutines.launch
 
-private val TOPICS = listOf("Todos", "Programación", "Matemáticas", "Química", "Física", "General")
-
 @Composable
 fun VideosScreen(navController: NavController, sessionManager: SessionManager? = null) {
     val scope = rememberCoroutineScope()
+    var dynamicTopics by remember { mutableStateOf(listOf("Todos")) }
     var selectedTopic by remember { mutableStateOf("Todos") }
     var videos by remember { mutableStateOf<List<VideoDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
     var playingVideoUrl by remember { mutableStateOf<String?>(null) }
     var showUploadModal by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        try {
+            val response = RetrofitClient.instance.getVideoStats()
+            if (response.isSuccessful) {
+                val stats = response.body() ?: emptyList()
+                val tags = mutableListOf("Todos")
+                tags.addAll(stats.take(6).map { it._id })
+                if (tags.size > 1) {
+                    dynamicTopics = tags
+                }
+            }
+        } catch (_: Exception) {}
+    }
 
     suspend fun loadVideos() {
         isLoading = true; errorMsg = null
@@ -96,7 +109,7 @@ fun VideosScreen(navController: NavController, sessionManager: SessionManager? =
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.padding(bottom = 24.dp)
             ) {
-                items(TOPICS) { topic ->
+                items(dynamicTopics) { topic ->
                     val selected = topic == selectedTopic
                     Surface(
                         modifier = Modifier
